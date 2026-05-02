@@ -1,0 +1,15 @@
+# For CPU-only torch (recommended, saves ~2GB vs CUDA build):
+# pip install torch --index-url https://download.pytorch.org/whl/cpu
+# Then install the rest:
+# pip install -r requirements.txt
+
+fastapi==0.115.*
+uvicorn[standard]==0.32.*
+python-multipart==0.0.*
+pillow==11.*
+httpx==0.28.*
+torch==2.5.*
+transformers==4.46.*
+numpy==2.1.*
+pydantic==2.9.*
+pytest==8.*
