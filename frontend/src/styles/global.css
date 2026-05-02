@@ -1,0 +1,106 @@
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+.btn {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 16px;
+  border: 1px solid;
+  border-radius: var(--radius-0);
+  transition: all var(--dur-base) var(--ease-out);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn:active { opacity: 0.6; }
+
+.btn-primary {
+  background: var(--fg-1);
+  color: var(--bg-0);
+  border-color: var(--fg-1);
+}
+.btn-primary:hover { background: #fff; }
+
+.btn-secondary {
+  background: transparent;
+  color: var(--fg-1);
+  border-color: var(--line-2);
+}
+.btn-secondary:hover { border-color: var(--line-3); }
+
+.btn-ghost {
+  border-color: transparent;
+  color: var(--fg-2);
+  padding-left: 0;
+  padding-right: 0;
+}
+.btn-ghost:hover { color: var(--fg-1); }
+
+.btn-lg { padding: 14px 22px; font-size: 13px; }
+
+/* ── Section base ────────────────────────────────────────── */
+.section {
+  padding: var(--space-9) 0;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.section-head {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 56px;
+  max-width: 700px;
+}
+
+.section-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.section-title {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(32px, 4vw, 52px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--fg-1);
+}
+
+.section-sub {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fg-2);
+  max-width: 560px;
+}
+
+/* ── Scroll reveal ───────────────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(8px);
+  transition:
+    opacity   var(--dur-slow) var(--ease-out),
+    transform var(--dur-slow) var(--ease-out);
+}
+
+.reveal.in { opacity: 1; transform: translateY(0); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .container { padding: 0 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transition: none; }
+}

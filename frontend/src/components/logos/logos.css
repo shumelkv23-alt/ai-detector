@@ -1,0 +1,33 @@
+.logos {
+  padding: 40px 0;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.logos-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-4);
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logos-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.logos-row span {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: var(--fg-3);
+  letter-spacing: -0.02em;
+  opacity: 0.7;
+  transition: opacity var(--dur-base);
+}
+
+.logos-row span:hover { opacity: 1; }

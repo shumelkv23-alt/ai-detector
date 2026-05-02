@@ -1,0 +1,27 @@
+.cta {
+  padding: var(--space-9) 0;
+  text-align: center;
+  border-bottom: 1px solid var(--line-1);
+}
+
+.cta-title {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(40px, 5vw, 64px);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: var(--fg-1);
+}
+
+.cta-sub {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  color: var(--fg-2);
+  margin-top: 20px;
+}
+
+.cta-actions {
+  margin-top: 36px;
+  display: inline-flex;
+  gap: 12px;
+}

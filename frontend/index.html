@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Detective — детектор сгенерированных изображений</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap">
+  <script type="module" src="/src/main.js"></script>
+</head>
+<body>
+
+<!-- ========== HEADER ========== -->
+<header class="header">
+  <div class="container header-row">
+    <a href="#" class="header-logo">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <g stroke="currentColor" stroke-width="1" opacity="0.35">
+          <path d="M0 0H32M0 8H32M0 16H32M0 24H32M0 32H32" transform="translate(4 4)"/>
+          <path d="M0 0V32M8 0V32M16 0V32M24 0V32M32 0V32" transform="translate(4 4)"/>
+        </g>
+        <rect x="20" y="4" width="8" height="8" fill="currentColor" opacity="0.9"/>
+        <rect x="12" y="20" width="8" height="8" fill="currentColor" opacity="0.5"/>
+        <circle cx="24" cy="24" r="11" stroke="currentColor" stroke-width="2" fill="none"/>
+        <line x1="32" y1="32" x2="38" y2="38" stroke="currentColor" stroke-width="2" stroke-linecap="square"/>
+      </svg>
+      <span class="word">AI<span class="sep">/</span>DETECTIVE</span>
+    </a>
+    <nav class="header-nav">
+      <a href="#how">Как работает</a>
+      <a href="#signals">Сигналы</a>
+      <a href="#metrics">Точность</a>
+      <a href="#api">API</a>
+      <a href="#pricing">Цены</a>
+    </nav>
+    <div class="header-cta">
+      <button class="btn btn-ghost">Войти</button>
+      <button class="btn btn-secondary">Загрузить</button>
+    </div>
+  </div>
+</header>
+
+<!-- ========== HERO ========== -->
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="container hero-inner">
+    <div>
+      <div class="hero-eyebrow"><span class="dot"></span>МОДЕЛЬ V4 · LIVE</div>
+      <h1 class="hero-title">
+        Обнаружение<br>
+        <span class="slash">—</span> синтетических<br>
+        изображений<span class="accent">.</span>
+      </h1>
+      <p class="hero-sub">
+        Мультимодельный анализ за 1.8 секунды. Семь сигналов: артефакты компрессии, частотная карта, симметрия, метаданные. Объяснимый результат, а не «магия».
+      </p>
+      <div class="hero-actions">
+        <button class="btn btn-primary btn-lg">Загрузить изображение</button>
+        <button class="btn btn-secondary btn-lg">Документация API</button>
+      </div>
+      <div class="hero-meta">
+        <div><span class="v" data-counter="97.3" data-decimals="1" data-suffix="%"></span>точность F1</div>
+        <div><span class="v" data-counter="1.8"  data-decimals="1" data-suffix=" с"></span>среднее время</div>
+        <div><span class="v">7</span>сигналов</div>
+      </div>
+    </div>
+
+    <!-- Scan demo -->
+    <div class="scan-demo">
+      <div class="scan-img"></div>
+      <div class="scan-cells">
+        <div class="scan-cell alert" style="left:24px;top:24px"></div>
+        <div class="scan-cell alert" style="left:48px;top:24px"></div>
+        <div class="scan-cell alert" style="left:24px;top:48px"></div>
+        <div class="scan-cell alert" style="left:48px;top:48px"></div>
+        <div class="scan-cell alert" style="left:96px;top:96px"></div>
+        <div class="scan-cell alert" style="left:120px;top:96px"></div>
+        <div class="scan-cell alert" style="left:120px;top:120px"></div>
+        <div class="scan-cell alert" style="left:168px;top:192px"></div>
+        <div class="scan-cell alert" style="left:192px;top:192px"></div>
+        <div class="scan-cell alert" style="left:192px;top:216px"></div>
+        <div class="scan-cell alert" style="left:72px;top:264px"></div>
+        <div class="scan-cell alert" style="left:96px;top:264px"></div>
+      </div>
+      <div class="scan-line"></div>
+      <div class="scan-overlay-tl">
+        <span class="scan-tag">SAMPLE · 04 / 12</span>
+        <span class="scan-tag">SDXL</span>
+      </div>
+      <div class="scan-overlay-bl">
+        <div>
+          <div class="scan-conf-label">Confidence</div>
+          <div class="scan-conf" data-counter="0.974" data-decimals="3"></div>
+        </div>
+        <span class="scan-verdict"><span class="vdot"></span>AI-GENERATED</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== LOGOS ========== -->
+<section class="logos">
+  <div class="container">
+    <div class="logos-label">Используется редакциями и платформами</div>
+    <div class="logos-row">
+      <span>МЕДИАЗОНА</span>
+      <span>OSINT/LAB</span>
+      <span>VERIFY.IO</span>
+      <span>FORENSIC×</span>
+      <span>NEWSDESK</span>
+      <span>FACTCHECK.RU</span>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SIGNALS ========== -->
+<section id="signals" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">— SIGNALS · 06</div>
+      <h2 class="section-title">Семь независимых детекторов.</h2>
+      <p class="section-sub">Каждый сигнал — отдельная модель с собственной метрикой уверенности. Вердикт собирается из агрегата с весами, обученными на 4.2 млн помеченных изображений.</p>
+    </div>
+    <div class="signals">
+      <div class="signal-card">
+        <div class="signal-num">— 01</div>
+        <div class="signal-name">JPEG-артефакты</div>
+        <div class="signal-bar">
+          <div class="track"><div class="fill" style="width:92%"></div></div>
+          <span class="pct">92.0%</span>
+        </div>
+        <p class="signal-desc">Аномалии блочной компрессии и квантования, характерные для синтетических изображений.</p>
+      </div>
+      <div class="signal-card">
+        <div class="signal-num">— 02</div>
+        <div class="signal-name">Частотная карта</div>
+        <div class="signal-bar">
+          <div class="track"><div class="fill" style="width:88%"></div></div>
+          <span class="pct">88.0%</span>
+        </div>
+        <p class="signal-desc">Анализ DCT-спектра. Генеративные модели оставляют различимый частотный отпечаток.</p>
+      </div>
+      <div class="signal-card">
+        <div class="signal-num">— 03</div>
+        <div class="signal-name">Симметрия лица</div>
+        <div class="signal-bar">
+          <div class="track"><div class="fill" style="width:84%"></div></div>
+          <span class="pct">84.0%</span>
+        </div>
+        <p class="signal-desc">Микро-асимметрии в чертах лица, текстуре кожи и расположении черт.</p>
+      </div>
+      <div class="signal-card">
+        <div class="signal-num">— 04</div>
+        <div class="signal-name">Семантика сцены</div>
+        <div class="signal-bar">
+          <div class="track"><div class="fill" style="width:79%"></div></div>
+          <span class="pct">79.0%</span>
+        </div>
+        <p class="signal-desc">Согласованность теней, отражений и физики освещения внутри кадра.</p>
+      </div>
+      <div class="signal-card">
+        <div class="signal-num">— 05</div>
+        <div class="signal-name">Provenance</div>
+        <div class="signal-bar">
+          <div class="track"><div class="fill" style="width:95%"></div></div>
+          <span class="pct">95.0%</span>
+        </div>
+        <p class="signal-desc">EXIF, C2PA, цифровые подписи. Подтверждённое происхождение даёт сильный сигнал.</p>
+      </div>
+      <div class="signal-card">
+        <div class="signal-num">— 06</div>
+        <div class="signal-name">Текстурная карта</div>
+        <div class="signal-bar">
+          <div class="track"><div class="fill" style="width:81%"></div></div>
+          <span class="pct">81.0%</span>
+        </div>
+        <p class="signal-desc">Регулярность шумовой структуры. Реальные сенсоры производят характерный паттерн PRNU.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== HOW ========== -->
+<section id="how" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">— PROCESS</div>
+      <h2 class="section-title">Как работает.</h2>
+      <p class="section-sub">Загрузка, разложение на тайлы, параллельный анализ. Результат — JSON с вердиктом, сигналами и heatmap'ом подозрительных областей.</p>
+    </div>
+    <div class="how">
+      <div class="how-list">
+        <div class="how-step">
+          <div class="how-num">— 01</div>
+          <div>
+            <div class="how-name">Декомпозиция</div>
+            <div class="how-desc">Изображение разбивается на тайлы 32×32 px. Извлекаются метаданные, EXIF, C2PA-манифесты.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">— 02</div>
+          <div>
+            <div class="how-name">Параллельный анализ</div>
+            <div class="how-desc">Семь моделей обрабатывают тайлы независимо. Каждая возвращает локальную карту уверенности.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">— 03</div>
+          <div>
+            <div class="how-name">Агрегация</div>
+            <div class="how-desc">Карты сводятся в единый heatmap. Веса калиброваны на валидационном корпусе.</div>
+          </div>
+        </div>
+        <div class="how-step">
+          <div class="how-num">— 04</div>
+          <div>
+            <div class="how-name">Вердикт</div>
+            <div class="how-desc">Real / AI-generated / Inconclusive. Каждый класс снабжён confidence-интервалом.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal">
+        <div class="terminal-bar">
+          <span class="d"></span><span class="d"></span><span class="d"></span>
+          <span class="t">analyze.sh · response</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="pmt">$</span> <span class="key">curl</span> -X POST api.detective.ai/v4/analyze \</div>
+          <div>&nbsp;&nbsp;-F "image=@photo.jpg"</div>
+          <div>&nbsp;</div>
+          <div><span class="cmt"># response · 1.84s</span></div>
+          <div>{</div>
+          <div>&nbsp;&nbsp;"verdict": <span class="bad">"ai_generated"</span>,</div>
+          <div>&nbsp;&nbsp;"confidence": 0.974,</div>
+          <div>&nbsp;&nbsp;"model_guess": <span class="key">"sdxl-1.0"</span>,</div>
+          <div>&nbsp;&nbsp;"signals": {</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;"jpeg_artifacts": <span class="ok">0.918</span>,</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;"freq_map":&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">0.842</span>,</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;"facial_sym":&nbsp;&nbsp;&nbsp;&nbsp;<span class="ok">0.617</span>,</div>
+          <div>&nbsp;&nbsp;&nbsp;&nbsp;"provenance":&nbsp;&nbsp;&nbsp;&nbsp;<span class="cmt">0.214</span></div>
+          <div>&nbsp;&nbsp;},</div>
+          <div>&nbsp;&nbsp;"heatmap_url": <span class="key">"https://..."</span></div>
+          <div>}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== METRICS ========== -->
+<section id="metrics" class="section">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-eyebrow">— BENCHMARKS · Q1 2026</div>
+      <h2 class="section-title">Цифры, не обещания.</h2>
+    </div>
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-v" data-counter="97.3"  data-decimals="1" data-suffix="%"></div>
+        <div class="metric-l">F1 на DEEPFAKE-BENCH-V3</div>
+      </div>
+      <div class="metric">
+        <div class="metric-v" data-counter="1.84"  data-decimals="2" data-suffix=" с"></div>
+        <div class="metric-l">Среднее время ответа</div>
+      </div>
+      <div class="metric">
+        <div class="metric-v" data-counter="4.2"   data-decimals="1" data-suffix="М"></div>
+        <div class="metric-l">Изображений в обучении</div>
+      </div>
+      <div class="metric">
+        <div class="metric-v" data-counter="0.18"  data-decimals="2" data-suffix="%"></div>
+        <div class="metric-l">False positive rate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== CTA ========== -->
+<section class="cta">
+  <div class="container">
+    <h2 class="cta-title">Загрузите изображение.<br>Получите ответ за 2 секунды.</h2>
+    <p class="cta-sub">Без регистрации до 10 проверок в день.</p>
+    <div class="cta-actions">
+      <button class="btn btn-primary btn-lg">Начать</button>
+      <button class="btn btn-secondary btn-lg">API-ключ</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container footer-row">
+    <a href="#" class="header-logo">
+      <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:24px;height:24px">
+        <g stroke="currentColor" stroke-width="1" opacity="0.35">
+          <path d="M0 0H32M0 8H32M0 16H32M0 24H32M0 32H32" transform="translate(4 4)"/>
+          <path d="M0 0V32M8 0V32M16 0V32M24 0V32M32 0V32" transform="translate(4 4)"/>
+        </g>
+        <rect x="20" y="4" width="8" height="8" fill="currentColor" opacity="0.9"/>
+        <rect x="12" y="20" width="8" height="8" fill="currentColor" opacity="0.5"/>
+        <circle cx="24" cy="24" r="11" stroke="currentColor" stroke-width="2" fill="none"/>
+        <line x1="32" y1="32" x2="38" y2="38" stroke="currentColor" stroke-width="2" stroke-linecap="square"/>
+      </svg>
+      <span class="word" style="font-size:13px">AI<span class="sep">/</span>DETECTIVE</span>
+    </a>
+    <div class="footer-links">
+      <a href="#">Документация</a>
+      <a href="#">Цены</a>
+      <a href="#">Статус</a>
+      <a href="#">Безопасность</a>
+      <a href="#">Контакты</a>
+    </div>
+    <div class="footer-meta">© 2026 · v4.2.1 · ВСЕ СИСТЕМЫ В НОРМЕ</div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,55 @@
+:root {
+  --bg-0: #050505;
+  --bg-1: #0a0a0a;
+  --bg-2: #111111;
+  --bg-3: #1a1a1a;
+  --bg-4: #242424;
+
+  --line-1: #1f1f1f;
+  --line-2: #2a2a2a;
+  --line-3: #3a3a3a;
+
+  --fg-1: #f5f5f5;
+  --fg-2: #a3a3a3;
+  --fg-3: #737373;
+  --fg-4: #525252;
+  --fg-5: #2e2e2e;
+
+  --signal:      #10b981;
+  --signal-dim:  #064e3b;
+  --signal-glow: rgba(16, 185, 129, 0.18);
+
+  --alert:       #ef4444;
+  --alert-dim:   #450a0a;
+  --alert-glow:  rgba(239, 68, 68, 0.18);
+
+  --caution:     #f59e0b;
+
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Menlo', monospace;
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  24px;
+  --space-6:  32px;
+  --space-7:  48px;
+  --space-8:  64px;
+  --space-9:  96px;
+  --space-10: 128px;
+
+  --radius-0:    0;
+  --radius-1:    2px;
+  --radius-2:    4px;
+  --radius-pill: 999px;
+
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:  120ms;
+  --dur-base:  200ms;
+  --dur-slow:  400ms;
+
+  --container: 1280px;
+  --gutter:    32px;
+}
