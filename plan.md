@@ -11,7 +11,6 @@
 - **Chrome-расширение — отложено на этап 2**. Сначала полностью закрываем веб-сайт, потом возвращаемся к extension.
 - Монорепо на будущее: `backend/`, `frontend/` в одном корне (папка `extension/` появится на этапе 2).
 - Тройка моделей пересмотрена (см. ниже)
-- **Дизайн фронтенда** отталкивается от [DESIGN-notion.md](DESIGN-notion.md) — это источник правды по палитре, типографике, отступам, границам и теням.
 
 ## Git-флоу
 
@@ -45,7 +44,6 @@
 курсовая работа/
 ├── README.md                       # инструкция запуска + примеры
 ├── plan.md                         # этот файл
-├── DESIGN-notion.md                # источник правды по дизайну фронтенда
 ├── .gitignore
 ├── backend/
 │   ├── requirements.txt
@@ -64,17 +62,28 @@
 │           ├── image.py            # load_from_upload, load_from_url, validate
 │           └── errors.py           # AppError → HTTPException mapper
 └── frontend/
-    ├── index.html
-    ├── styles/
-    │   ├── tokens.css              # CSS custom properties из DESIGN-notion.md
-    │   ├── typography.css          # NotionInter scale, weights, letter-spacing
-    │   └── global.css              # reset + layout-утилиты
-    ├── components/
-    │   ├── hero.css                # hero-секция: 64px display headline
-    │   ├── dropzone.css            # drag-drop зона с whisper-border
-    │   ├── result-card.css         # карточки моделей + итог ансамбля
-    │   └── badge.css               # pill-badge для вердикта (AI / Real)
-    └── app.js                      # drag-drop, fetch, рендер результатов
+    ├── index.html                  # Vite entry point (только HTML-разметка)
+    ├── package.json
+    ├── vite.config.js
+    └── src/
+        ├── main.js                 # импорты CSS + initCounters/initReveal
+        ├── styles/
+        │   ├── tokens.css          # CSS custom properties (dark terminal palette)
+        │   ├── reset.css           # box-sizing, body, base elements
+        │   └── global.css          # .container, .btn, .section, .reveal
+        ├── components/
+        │   ├── header/header.css
+        │   ├── hero/hero.css
+        │   ├── scan-demo/scan-demo.css
+        │   ├── logos/logos.css
+        │   ├── signals/signals.css
+        │   ├── how/how.css
+        │   ├── metrics/metrics.css
+        │   ├── cta/cta.css
+        │   └── footer/footer.css
+        └── utils/
+            ├── counter.js          # animateCounter + IntersectionObserver
+            └── reveal.js           # scroll reveal observer
 ```
 
 > Папка `extension/` отсутствует — расширение перенесено в «Что НЕ делаем (этап 2)».
@@ -143,118 +152,88 @@ DEVICE = "cpu"
 
 ## Frontend (`frontend/`)
 
-Чистый ванильный HTML/CSS/JS — никаких сборщиков (для курсовой это плюс: открывается одним кликом).
+Сборщик — **Vite 6** (vanilla JS, без фреймворка). Запуск: `cd frontend && npm run dev`.
 
-**Дизайн-система — по [DESIGN-notion.md](DESIGN-notion.md)**. Ниже — как именно применяем каждую часть.
+### Дизайн: dark terminal / forensic
 
-### Design tokens (`styles/tokens.css`)
+Палитра — глубокий чёрный фон, монопространственная типографика, зелёный сигнал / красный алерт. Дизайн намеренно отсылает к forensic-инструментам и CLI-интерфейсам.
 
-Все значения берутся из разделов 2 и 5 DESIGN-notion.md. Никаких хардкоженых цветов в компонентах:
+### Design tokens (`src/styles/tokens.css`)
 
 ```css
 :root {
-  /* palette */
-  --color-bg:          #ffffff;
-  --color-bg-alt:      #f6f5f4;              /* warm white для альтернации секций */
-  --color-text:        rgba(0,0,0,0.95);     /* near-black, не чистый #000 */
-  --color-text-muted:  #615d59;              /* warm gray 500 */
-  --color-text-faint:  #a39e98;              /* warm gray 300 */
-  --color-accent:      #0075de;              /* Notion Blue — единственный saturated */
-  --color-accent-hover:#005bab;
-  --color-focus:       #097fe8;
-  --color-badge-bg:    #f2f9ff;
-  --color-badge-text:  #097fe8;
-  --color-success:     #1aae39;              /* вердикт Real */
-  --color-warning:     #dd5b00;              /* вердикт AI */
+  /* backgrounds */
+  --bg-0: #050505;  --bg-1: #0a0a0a;  --bg-2: #111111;
+  --bg-3: #1a1a1a;  --bg-4: #242424;
 
-  /* borders & shadows */
-  --border-whisper:    1px solid rgba(0,0,0,0.1);
-  --shadow-card:       rgba(0,0,0,0.04) 0 4px 18px,
-                       rgba(0,0,0,0.027) 0 2.025px 7.84688px,
-                       rgba(0,0,0,0.02) 0 0.8px 2.925px,
-                       rgba(0,0,0,0.01) 0 0.175px 1.04062px;
+  /* borders */
+  --line-1: #1f1f1f;  --line-2: #2a2a2a;  --line-3: #3a3a3a;
 
-  /* radii */
-  --radius-btn:   4px;
-  --radius-card:  12px;
-  --radius-hero:  16px;
-  --radius-pill:  9999px;
+  /* foreground */
+  --fg-1: #f5f5f5;  --fg-2: #a3a3a3;  --fg-3: #737373;
+  --fg-4: #525252;  --fg-5: #2e2e2e;
 
-  /* spacing (8px base, non-rigid) */
-  --space-section: clamp(48px, 5vw + 32px, 120px);
-  --space-lg:      32px;
-  --space-md:      16px;
-  --space-sm:      8px;
+  /* semantic */
+  --signal: #10b981;  --signal-glow: rgba(16,185,129,0.18);
+  --alert:  #ef4444;  --alert-glow:  rgba(239,68,68,0.18);
+  --caution: #f59e0b;
+
+  /* fonts */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'Inter', -apple-system, sans-serif;
+
+  /* spacing */
+  --space-9: 96px;  /* section padding */
+  --gutter:  32px;
+
+  /* animation */
+  --ease-out:    cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-base: 200ms;  --dur-slow: 400ms;
+
+  /* misc */
+  --radius-0: 0;  --radius-pill: 999px;
+  --container: 1280px;
 }
 ```
 
-### Типографика (`styles/typography.css`)
+### Типографика
 
-Стек шрифтов точно по DESIGN-notion.md §3 (NotionInter недоступен публично → используем Inter как primary, остальные fallback'и из файла):
+- **Primary font:** JetBrains Mono (загружается с Google Fonts).
+- **UI font:** Inter — для body-текста и описаний.
+- Hero title: `clamp(48px, 6.4vw, 88px)`, weight 500, `letter-spacing: -0.04em` — агрессивное сжатие на больших размерах.
+- Section titles: `clamp(32px, 4vw, 52px)`, letter-spacing `-0.03em`.
+- Все метки, теги, бейджи — монопространственные, uppercase, `letter-spacing: 0.08–0.16em`.
 
-```css
-body {
-  font-family: Inter, -apple-system, system-ui, "Segoe UI", Helvetica, Arial, sans-serif;
-  font-feature-settings: "lnum", "locl";
-  color: var(--color-text);
-  background: var(--color-bg);
-}
-```
+### Структура секций `index.html`
 
-Иерархия — ровно по таблице из §3 DESIGN-notion.md. Ключевые роли для нашего UI:
+1. **Header** — sticky, `backdrop-filter: blur(12px)`, nav скрывается на `<900px`.
+2. **Hero** — grid 1.1fr/1fr: слева заголовок + CTA + stat-метрики с анимированными счётчиками; справа `scan-demo` (анимированная линия сканирования, алерт-ячейки).
+3. **Logos** — лента организаций в моно-шрифте.
+4. **Signals** (#signals) — grid 3×2, карточки с прогресс-барами по каждому из 6 сигналов.
+5. **How** (#how) — grid 1/1: слева шаги, справа терминальный блок с JSON-ответом.
+6. **Metrics** (#metrics) — grid 4×1, крупные числа 56px с анимированными счётчиками.
+7. **CTA** — центрированная секция, две кнопки.
+8. **Footer** — logo + links + status.
 
-| Где используем | Роль | Размер | Weight | letter-spacing | line-height |
-|---|---|---|---|---|---|
-| Hero headline («AI Image Detector») | Display Hero | 64px | 700 | -2.125px | 1.00 |
-| Подзаголовок hero | Body Large | 20px | 600 | -0.125px | 1.40 |
-| Заголовок секции результатов | Section Heading | 48px | 700 | -1.5px | 1.00 |
-| Название модели в карточке | Card Title | 22px | 700 | -0.25px | 1.27 |
-| Проценты (число) | Sub-heading Large | 40px | 700 | normal | 1.50 |
-| Описание под процентом | Body | 16px | 400 | normal | 1.50 |
-| Бейдж вердикта (AI / Real) | Badge | 12px | 600 | 0.125px | 1.33 |
-| Кнопка «Проанализировать» | Nav / Button | 15px | 600 | normal | 1.33 |
+### Поведение `src/utils/`
 
-Compression на display-размерах — это важная фишка Notion, не терять (§3, принцип «Compression at scale»).
+- `counter.js` — `initCounters()`: `IntersectionObserver` запускает `animateCounter` (ease-out cubic, 1200ms) при попадании элемента с `data-counter` в viewport.
+- `reveal.js` — `initReveal()`: добавляет класс `.in` на `.reveal`-элементы при скролле (threshold 15%).
 
-### Макет `index.html`
+### Адаптив
 
-Одна страница, три секции с вертикальным ритмом `var(--space-section)` между ними:
-
-1. **Hero** (`components/hero.css`) — белый фон, центрированная колонка, max-width 1200px. Display-заголовок 64px, подзаголовок 20px warm-gray, синяя pill-кнопка как сигнал действия.
-2. **Dropzone + URL input** (`components/dropzone.css`) — на фоне warm white (`--color-bg-alt`), чтобы сработала notion-альтернация секций (§5, «Warm alternation»). Сама зона drop — карточка: `--border-whisper`, `--radius-hero` (16px, featured), внутри — иконка + подсказка «Drop image or paste URL», плюс явный `<input type="file">` и `<input type="url">`.
-3. **Results** (`components/result-card.css`) — белый фон, сетка: слева превью изображения (12px radius + whisper border, §4 «Image Treatment»), справа 4 карточки в grid. Первая карточка — **итог ансамбля** (крупнее, `--radius-hero`, layered `--shadow-card`, бейдж AI/Real pill'ом цвета вердикта). Остальные три — карточки моделей (12px radius, whisper border, процент крупно 40px/700, прогресс-бар, название модели 22px/700).
-
-### Поведение `app.js`
-
-- Обработчики `dragenter/dragover/drop` на dropzone + fallback через `<input type="file">`.
-- По submit: `fetch('/api/analyze' | '/api/analyze-url')`, во время ожидания — spinner (только анимация `opacity` + `transform`, компоновочно-friendly, §8 web/coding-style).
-- Рендер результатов: 4 карточки. Цвет pill-бейджа вердикта:
-  - `verdict === "real"` → фон `rgba(26,174,57,0.1)`, текст `--color-success`
-  - `verdict === "ai"`   → фон `rgba(221,91,0,0.1)`, текст `--color-warning`
-  - `disagreement === true` → добавить маленький бейдж «Models disagree» (pill, `--color-badge-bg` / `--color-badge-text`)
-- Ошибки: тост-карточка снизу с whisper-border, красная тонкая полоса слева, текст из `detail` ответа FastAPI (без внутренних трейсбеков).
-
-### Адаптив (breakpoints из §7 DESIGN-notion.md)
-
-- `>1200px` — полный layout, hero 64px.
-- `768-1200px` — всё то же, отступы уменьшаются до `--space-lg`.
-- `<768px` — hero масштабируется до 40px → 26px, грид результатов схлопывается в одну колонку, dropzone на всю ширину.
-- Touch-таргеты: кнопки минимум 8-16px padding, pill-бейджи 4px/8px (§7 Touch Targets).
-
-### Состояния (§8)
-
-- **Focus** на всех интерактивных элементах: `outline: 2px solid var(--color-focus); outline-offset: 2px;` — обязательно, не убирать `outline: none`.
-- **Hover** на кнопке CTA: фон → `--color-accent-hover`, `transform: scale(1.05)`.
-- **Active**: `transform: scale(0.9)` (фирменное Notion-нажатие).
-- **Disabled** (во время загрузки): текст `--color-text-faint`, `opacity: 0.6`, `cursor: not-allowed`.
+- `>900px` — полный двухколоночный layout.
+- `≤900px` — hero и how схлопываются в одну колонку, signals grid → 1fr, metrics → 2fr, header-nav скрыт.
+- `≤480px` — metrics → 1fr, container padding 16px.
+- `prefers-reduced-motion` — анимации scan-line и pulse отключаются, reveal без transition.
 
 ### Anti-template check
 
-Перед сдачей прогоняем фронт по чеклисту из web/design-quality.md §Component Checklist:
-- Не выглядит как дефолтный Tailwind/shadcn.
-- hover/focus/active — осознанные.
-- Есть иерархия (контраст 64px display vs 16px body, а не одинаковый emphasis).
-- Notion-альтернация секций (белый ↔ warm white) создаёт ритм без жёстких разделителей.
+- Нет шаблонных Tailwind/shadcn паттернов — всё написано вручную.
+- Монохромная палитра с двумя семантическими цветами (зелёный/красный) вместо «accent decoration».
+- Иерархия за счёт масштаба и letter-spacing, а не цвета.
+- Анимации только через `transform` / `opacity` / `top` — компоновочно-friendly.
 
 ## Порядок реализации (билд-ордер)
 
@@ -304,30 +283,34 @@ Compression на display-размерах — это важная фишка Not
 - Вернуться на dev: `git checkout dev`.
 - **Зачем:** `main` всегда запускаем. После этого шага бэкенд на `main` работает end-to-end.
 
-### Шаг 7 — Frontend: tokens + базовый layout
-- `index.html` с разметкой трёх секций (hero / dropzone / results-placeholder).
-- `styles/tokens.css` — все CSS custom properties из DESIGN-notion.md (см. выше).
-- `styles/typography.css` — шрифтовая шкала.
-- `styles/global.css` — reset + базовый layout.
-- **Пуш:** `feat(frontend): add Notion design tokens and typography scale`
+### Шаг 7 — Frontend: Vite + design tokens + landing shell
+- `cd frontend && npm install` (Vite 6).
+- `src/styles/tokens.css`, `reset.css`, `global.css` — dark terminal palette, кнопки, секции, reveal.
+- `index.html` — полная HTML-разметка (header / hero / logos / signals / how / metrics / cta / footer).
+- `src/main.js` — импорты CSS + `initCounters()` / `initReveal()`.
+- Проверка: `npm run dev` открывает `http://localhost:5173`, страница рендерится.
+- **Пуш:** `feat(frontend): add Vite setup with dark terminal design tokens`
 
-### Шаг 8 — Frontend: hero + dropzone
-- `components/hero.css` — hero-секция (64px display headline, 20px subtitle, blue CTA).
-- `components/dropzone.css` — drop-зона с whisper-border на warm-white фоне.
-- `app.js` — `dragenter/dragover/drop` handlers + URL input.
-- **Пуш:** `feat(frontend): implement hero section and drag-drop zone`
+### Шаг 8 — Frontend: компонентные CSS-файлы
+- Каждый компонент в своей папке (`header/`, `hero/`, `scan-demo/`, `logos/`, `signals/`, `how/`, `metrics/`, `cta/`, `footer/`).
+- Адаптивные медиа-запросы — в каждом компонентном CSS-файле (не в глобальном).
+- `src/utils/counter.js` + `src/utils/reveal.js` — анимации по IntersectionObserver.
+- **Пуш:** `feat(frontend): split CSS into per-component files with responsive rules`
 
-### Шаг 9 — Frontend: результаты + fetch
-- `components/result-card.css` + `components/badge.css` — карточки моделей, итог-ансамбля, AI/Real pill-бейджи.
-- В `app.js`: `fetch` с обработкой loading/error, рендер 4 карточек, toast на ошибках.
-- Focus/hover/active состояния на всех интерактивных элементах (§8 дизайна).
-- **Пуш:** `feat(frontend): render ensemble results with model cards and verdict badge`
+### Шаг 9 — Frontend: dropzone + fetch + результаты
+- `src/components/dropzone/` — drag-drop зона + URL input (тёмный стиль: `--line-2` border, `--bg-1` фон).
+- `src/components/result-card/` — карточки моделей с прогресс-барами; итог ансамбля крупнее.
+- `src/utils/api.js` — `analyzeFile(file)` / `analyzeUrl(url)` → `fetch('/api/analyze')`.
+- Spinner только через `opacity` + `transform`; toast-ошибка с `--alert` левой полосой.
+- Вердикт: `ai` → `--alert`, `real` → `--signal`.
+- **Пуш:** `feat(frontend): implement dropzone, fetch, and result cards`
 
-### Шаг 10 — Адаптив и anti-template чек
-- Медиа-запросы под breakpoints (§7 DESIGN-notion.md): 1200 / 768 / 400.
+### Шаг 10 — Frontend: polish + accessibility
+- Focus-ring: `outline: 2px solid var(--signal); outline-offset: 2px;` на всех интерактивных.
+- Проверить `prefers-reduced-motion` (scan-line и pulse отключены).
+- Keyboard navigation: Tab по всем кнопкам и ссылкам.
 - Прогон по Component Checklist из web/design-quality.md.
-- Проверить reduced-motion, контраст, keyboard navigation.
-- **Пуш:** `feat(frontend): add responsive breakpoints and accessibility polish`
+- **Пуш:** `feat(frontend): add focus states and accessibility polish`
 
 ### Шаг 11 — README
 - Установка (`python -m venv`, `pip install -r`), запуск бэкенда, запуск фронта через `python -m http.server 5500`.
@@ -352,12 +335,13 @@ Compression на display-размерах — это важная фишка Not
   curl -F "file=@samples/real.jpg" http://localhost:8000/api/analyze
   curl -X POST http://localhost:8000/api/analyze-url -H "Content-Type: application/json" -d '{"url":"https://..."}'
   ```
-- Открыть `frontend/index.html` через `python -m http.server 5500` (CORS не сработает с `file://`), проверить drag-drop + URL flow, увидеть 4 карточки с результатами.
-- Визуальная проверка соответствия DESIGN-notion.md:
-  - hero headline: 64px, weight 700, letter-spacing -2.125px — через DevTools computed styles.
-  - карточки: `box-shadow` — 4-слойный stack с max opacity 0.04.
-  - альтернация секций: белый → warm white (`#f6f5f4`) → белый.
-  - focus ring видим на Tab-навигации (`:focus-visible`).
+- Запустить фронтенд: `cd frontend && npm run dev` → `http://localhost:5173`, проверить drag-drop + URL flow, увидеть карточки с результатами.
+- Визуальная проверка дизайна через DevTools:
+  - hero title: `font-size` ≈88px на десктопе, `letter-spacing: -0.04em`.
+  - scan-line анимация видна, алерт-ячейки подсвечены красным.
+  - счётчики запускаются при скролле в viewport.
+  - focus ring (`outline: 2px solid var(--signal)`) виден на Tab-навигации.
+  - `prefers-reduced-motion: reduce` → scan-line и pulse остановлены.
 - Проверить error-paths: файл >10 МБ, gif, битый URL, недоступный URL.
 - Git: `main` запускается без модификаций, `dev` содержит все промежуточные коммиты.
 
