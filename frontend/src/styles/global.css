@@ -5,6 +5,8 @@
 }
 
 /* ── Buttons ─────────────────────────────────────────────── */
+.hidden { display: none !important; }
+
 .btn {
   font-family: var(--font-mono);
   font-size: 12px;
@@ -20,7 +22,10 @@
   gap: 8px;
 }
 
+a.btn { text-decoration: none; }
+
 .btn:active { opacity: 0.6; }
+button.btn { cursor: pointer; }
 
 .btn-primary {
   background: var(--fg-1);

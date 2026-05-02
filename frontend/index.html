@@ -56,7 +56,7 @@
         Мультимодельный анализ за 1.8 секунды. Семь сигналов: артефакты компрессии, частотная карта, симметрия, метаданные. Объяснимый результат, а не «магия».
       </p>
       <div class="hero-actions">
-        <button class="btn btn-primary btn-lg">Загрузить изображение</button>
+        <a href="#analyze" class="btn btn-primary btn-lg">Загрузить изображение</a>
         <button class="btn btn-secondary btn-lg">Документация API</button>
       </div>
       <div class="hero-meta">
@@ -95,6 +95,52 @@
         </div>
         <span class="scan-verdict"><span class="vdot"></span>AI-GENERATED</span>
       </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== ANALYZE ========== -->
+<section id="analyze" class="section analyze-section">
+  <div class="container">
+    <div class="section-head">
+      <div class="section-eyebrow">— ANALYZE</div>
+      <h2 class="section-title">Проверить изображение.</h2>
+    </div>
+
+    <div class="analyze-tabs">
+      <button class="analyze-tab active" data-tab="file">ФАЙЛ</button>
+      <button class="analyze-tab" data-tab="url">URL</button>
+    </div>
+
+    <div id="file-tab">
+      <input type="file" id="file-input" accept="image/jpeg,image/png,image/webp" hidden>
+      <label for="file-input" class="dropzone" id="dropzone">
+        <svg class="dropzone-icon" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0.5" y="0.5" width="47" height="47" stroke="currentColor" stroke-dasharray="5 4"/>
+          <path d="M24 13v18M24 31l-7-7M24 31l7-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+          <path d="M14 38h20" stroke="currentColor" stroke-width="1.5" stroke-linecap="square"/>
+        </svg>
+        <div class="dropzone-text">Перетащите изображение сюда</div>
+        <div class="dropzone-hint">или <span class="dropzone-link">выберите файл</span></div>
+        <div class="dropzone-formats">JPG · PNG · WEBP · до 10 МБ</div>
+      </label>
+    </div>
+
+    <div id="url-tab" class="url-input-wrap hidden">
+      <input type="url" id="url-input" class="url-input" placeholder="https://example.com/image.jpg">
+      <button class="btn btn-primary" id="url-submit">Анализировать</button>
+    </div>
+
+    <div id="loading" class="analyze-loading hidden">
+      <div class="loading-spinner"></div>
+      <div class="loading-text">АНАЛИЗИРУЮ · ЗАПУЩЕНО 3 МОДЕЛИ</div>
+    </div>
+
+    <div id="error-toast" class="analyze-error hidden"></div>
+
+    <div id="results" class="results hidden">
+      <div class="results-ensemble" id="ensemble-card"></div>
+      <div class="results-models" id="models-grid"></div>
     </div>
   </div>
 </section>
@@ -283,7 +329,7 @@
     <h2 class="cta-title">Загрузите изображение.<br>Получите ответ за 2 секунды.</h2>
     <p class="cta-sub">Без регистрации до 10 проверок в день.</p>
     <div class="cta-actions">
-      <button class="btn btn-primary btn-lg">Начать</button>
+      <a href="#analyze" class="btn btn-primary btn-lg">Начать</a>
       <button class="btn btn-secondary btn-lg">API-ключ</button>
     </div>
   </div>
