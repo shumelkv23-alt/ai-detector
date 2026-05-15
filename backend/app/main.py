@@ -8,6 +8,11 @@ from PIL import Image
 
 from app.config import MODELS
 from app.ml.detector import registry
+from app.ml.ela import compute_ela
+from app.ml.exif_analyzer import analyze_exif
+from app.ml.noise_analyzer import analyze_noise_consistency
+from app.ml.fft_analyzer import analyze_fft
+from app.ml.watermark_analyzer import analyze_watermark
 from app.ml.ensemble import aggregate
 from app.schemas import AnalyzeResponse, AnalyzeUrlRequest
 from app.utils.errors import register_error_handlers
@@ -52,8 +57,15 @@ async def analyze_url(payload: AnalyzeUrlRequest) -> AnalyzeResponse:
 async def _run_ensemble(image: Image.Image) -> AnalyzeResponse:
     started = time.perf_counter()
 
-    tasks = [asyncio.to_thread(registry.predict, m, image) for m in MODELS]
-    raw_results = await asyncio.gather(*tasks)
+    model_tasks = [asyncio.to_thread(registry.predict, m, image) for m in MODELS]
+    ela_task = asyncio.to_thread(compute_ela, image)
+    exif_task = asyncio.to_thread(analyze_exif, image)
+    noise_task = asyncio.to_thread(analyze_noise_consistency, image)
+    fft_task = asyncio.to_thread(analyze_fft, image)
+    watermark_task = asyncio.to_thread(analyze_watermark, image)
+    *raw_results, ela, exif, noise, fft, watermark = await asyncio.gather(
+        *model_tasks, ela_task, exif_task, noise_task, fft_task, watermark_task
+    )
 
     model_results = [
         {
@@ -61,16 +73,29 @@ async def _run_ensemble(image: Image.Image) -> AnalyzeResponse:
             "ai_prob": r["ai_prob"],
             "real_prob": r["real_prob"],
             "weight": m["weight"],
+            "patch_max_ai": r["patch_max_ai"],
         }
         for m, r in zip(MODELS, raw_results)
     ]
 
-    ensemble = aggregate(model_results)
+    ensemble = aggregate(
+        model_results,
+        ela_score=ela["ela_score"],
+        exif_score=exif["exif_score"],
+        noise_score=noise["noise_score"],
+        fft_score=fft["fft_score"],
+        watermark_score=watermark["watermark_score"],
+    )
     elapsed_ms = int((time.perf_counter() - started) * 1000)
 
     return AnalyzeResponse(
         models=[
-            {"name": r["name"], "ai_prob": r["ai_prob"], "real_prob": r["real_prob"]}
+            {
+                "name": r["name"],
+                "ai_prob": r["ai_prob"],
+                "real_prob": r["real_prob"],
+                "patch_max_ai": r["patch_max_ai"],
+            }
             for r in model_results
         ],
         ensemble=ensemble,
