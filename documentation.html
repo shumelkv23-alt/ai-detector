@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Detective — документация проекта</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --bg-0:#050505;--bg-1:#0a0a0a;--bg-2:#111;--bg-3:#1a1a1a;--bg-4:#242424;
+  --line-1:#1f1f1f;--line-2:#2a2a2a;--line-3:#3a3a3a;
+  --fg-1:#f5f5f5;--fg-2:#a3a3a3;--fg-3:#737373;--fg-4:#525252;
+  --signal:#10b981;--signal-glow:rgba(16,185,129,.16);
+  --alert:#ef4444;--alert-glow:rgba(239,68,68,.12);
+  --caution:#f59e0b;--caution-glow:rgba(245,158,11,.1);
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+  --sans:'Inter',-apple-system,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--bg-0);color:var(--fg-2);
+  font-family:var(--sans);font-size:15px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:var(--signal);text-decoration:none}
+a:hover{text-decoration:underline;text-underline-offset:3px}
+
+/* ── Layout ── */
+.layout{display:flex;max-width:1500px;margin:0 auto}
+.sidebar{
+  width:280px;flex-shrink:0;position:sticky;top:0;height:100vh;
+  overflow-y:auto;border-right:1px solid var(--line-1);
+  padding:32px 24px;background:var(--bg-1);
+}
+.content{flex:1;min-width:0;padding:56px 64px 120px}
+
+/* ── Sidebar ── */
+.side-brand{
+  font-family:var(--mono);font-weight:700;font-size:15px;
+  color:var(--fg-1);letter-spacing:-.02em;margin-bottom:4px;
+}
+.side-brand .sep{color:var(--signal)}
+.side-sub{
+  font-family:var(--mono);font-size:10px;letter-spacing:.14em;
+  color:var(--fg-4);text-transform:uppercase;margin-bottom:28px;
+}
+.side-nav{display:flex;flex-direction:column;gap:2px}
+.side-nav a{
+  font-family:var(--mono);font-size:12px;color:var(--fg-3);
+  padding:6px 10px;border-left:2px solid transparent;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.side-nav a:hover{color:var(--fg-1);border-left-color:var(--line-3);background:var(--bg-2);text-decoration:none}
+.side-nav .num{color:var(--fg-5,#2e2e2e);color:var(--fg-4);margin-right:8px}
+
+/* ── Hero ── */
+.hero{border-bottom:1px solid var(--line-2);padding-bottom:40px;margin-bottom:48px}
+.eyebrow{
+  font-family:var(--mono);font-size:11px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--signal);margin-bottom:16px;
+}
+h1{
+  font-family:var(--mono);font-weight:600;
+  font-size:clamp(34px,5vw,56px);letter-spacing:-.04em;
+  line-height:1.04;color:var(--fg-1);margin-bottom:20px;
+}
+.hero p{font-size:17px;max-width:760px;color:var(--fg-2)}
+.hero-meta{
+  display:flex;gap:28px;flex-wrap:wrap;margin-top:28px;
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--fg-4);
+}
+.hero-meta b{color:var(--fg-2);font-weight:500}
+
+/* ── Sections ── */
+section{margin-bottom:64px;scroll-margin-top:32px}
+.sec-head{display:flex;align-items:baseline;gap:14px;margin-bottom:8px}
+.sec-num{
+  font-family:var(--mono);font-size:13px;font-weight:600;
+  color:var(--signal);
+}
+h2{
+  font-family:var(--mono);font-weight:600;
+  font-size:clamp(22px,2.6vw,30px);letter-spacing:-.025em;
+  color:var(--fg-1);
+}
+.sec-lead{color:var(--fg-3);font-size:15px;margin-bottom:24px;max-width:820px}
+h3{
+  font-family:var(--mono);font-weight:600;font-size:16px;
+  color:var(--fg-1);margin:32px 0 12px;letter-spacing:-.01em;
+}
+h3::before{content:'// ';color:var(--fg-4)}
+p{margin-bottom:14px;max-width:860px}
+ul{margin:0 0 16px;padding-left:22px;max-width:860px}
+li{margin-bottom:7px}
+li::marker{color:var(--signal)}
+strong{color:var(--fg-1);font-weight:600}
+code{
+  font-family:var(--mono);font-size:.86em;
+  background:var(--bg-3);color:var(--signal);
+  padding:2px 6px;border-radius:3px;
+}
+
+/* ── Cards / callouts ── */
+.card{
+  border:1px solid var(--line-2);background:var(--bg-1);
+  padding:24px 28px;margin:20px 0;
+}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin:20px 0}
+.mini{
+  border:1px solid var(--line-2);background:var(--bg-1);padding:18px 20px;
+}
+.mini h4{
+  font-family:var(--mono);font-size:13px;color:var(--fg-1);
+  margin-bottom:8px;font-weight:600;
+}
+.mini p{font-size:13.5px;color:var(--fg-3);margin:0}
+
+.callout{
+  border-left:2px solid var(--line-3);background:var(--bg-1);
+  padding:16px 22px;margin:20px 0;
+}
+.callout.good{border-left-color:var(--signal);background:var(--signal-glow)}
+.callout.warn{border-left-color:var(--caution);background:var(--caution-glow)}
+.callout.bad{border-left-color:var(--alert);background:var(--alert-glow)}
+.callout .label{
+  font-family:var(--mono);font-size:10px;letter-spacing:.16em;
+  text-transform:uppercase;margin-bottom:6px;
+}
+.callout.good .label{color:var(--signal)}
+.callout.warn .label{color:var(--caution)}
+.callout.bad .label{color:var(--alert)}
+.callout p{margin:0;font-size:14px;color:var(--fg-2)}
+
+/* ── Tables ── */
+table{
+  width:100%;border-collapse:collapse;margin:20px 0;
+  font-size:13.5px;
+}
+th,td{
+  text-align:left;padding:11px 14px;
+  border-bottom:1px solid var(--line-2);vertical-align:top;
+}
+th{
+  font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--fg-4);font-weight:500;
+  border-bottom-color:var(--line-3);
+}
+td{color:var(--fg-2)}
+td:first-child{color:var(--fg-1)}
+tr:hover td{background:var(--bg-1)}
+.mono-cell{font-family:var(--mono);font-size:12px}
+
+/* ── Badges ── */
+.badge{
+  font-family:var(--mono);font-size:10px;letter-spacing:.06em;
+  padding:2px 7px;border:1px solid;border-radius:3px;
+  display:inline-block;white-space:nowrap;
+}
+.b-keep{color:var(--signal);border-color:var(--signal)}
+.b-drop{color:var(--alert);border-color:var(--alert)}
+.b-defer{color:var(--caution);border-color:var(--caution)}
+
+/* ── Code block ── */
+pre{
+  font-family:var(--mono);font-size:12.5px;line-height:1.6;
+  background:var(--bg-1);border:1px solid var(--line-2);
+  border-left:2px solid var(--line-3);
+  padding:16px 20px;margin:18px 0;overflow-x:auto;color:var(--fg-2);
+}
+pre .c{color:var(--fg-4)}
+pre .k{color:var(--signal)}
+
+/* ── Flow diagram ── */
+.flow{
+  font-family:var(--mono);font-size:12px;line-height:1.9;
+  background:var(--bg-1);border:1px solid var(--line-2);
+  padding:22px 26px;margin:20px 0;overflow-x:auto;color:var(--fg-2);
+  white-space:pre;
+}
+.flow .hl{color:var(--signal)}
+.flow .hl2{color:var(--caution)}
+
+/* ── Footer ── */
+.docfoot{
+  border-top:1px solid var(--line-2);margin-top:80px;padding-top:28px;
+  font-family:var(--mono);font-size:11px;color:var(--fg-4);letter-spacing:.06em;
+}
+
+@media(max-width:1000px){
+  .layout{flex-direction:column}
+  .sidebar{width:100%;height:auto;position:static;border-right:none;border-bottom:1px solid var(--line-1)}
+  .side-nav{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+  .content{padding:40px 24px 80px}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ════════ SIDEBAR ════════ -->
+<aside class="sidebar">
+  <div class="side-brand">AI<span class="sep">/</span>DETECTIVE</div>
+  <div class="side-sub">Документация проекта</div>
+  <nav class="side-nav">
+    <a href="#overview"><span class="num">01</span>Обзор проекта</a>
+    <a href="#stack"><span class="num">02</span>Технологический стек</a>
+    <a href="#arch"><span class="num">03</span>Архитектура и поток</a>
+    <a href="#api"><span class="num">04</span>API: эндпоинты</a>
+    <a href="#models"><span class="num">05</span>Ансамбль моделей</a>
+    <a href="#why-models"><span class="num">06</span>Почему эти модели</a>
+    <a href="#forensics"><span class="num">07</span>Forensic-анализаторы</a>
+    <a href="#ensemble"><span class="num">08</span>Логика агрегации</a>
+    <a href="#vlm"><span class="num">09</span>VLM-слой (OpenAI)</a>
+    <a href="#frontend"><span class="num">10</span>Фронтенд</a>
+    <a href="#dropped"><span class="num">11</span>Что выкинули и почему</a>
+    <a href="#scope"><span class="num">12</span>Что было бы лишним</a>
+    <a href="#limits"><span class="num">13</span>Ограничения</a>
+    <a href="#run"><span class="num">14</span>Запуск</a>
+    <a href="#tree"><span class="num">15</span>Структура файлов</a>
+  </nav>
+</aside>
+
+<!-- ════════ CONTENT ════════ -->
+<main class="content">
+
+<div class="hero">
+  <div class="eyebrow">— Курсовая работа · веб-приложение</div>
+  <h1>Система определения<br>AI-сгенерированных изображений</h1>
+  <p>Веб-приложение, которое по загруженному изображению определяет: это реальная
+  фотография или картинка, сгенерированная нейросетью. Вердикт выносит ансамбль из
+  трёх предобученных моделей, пяти forensic-анализаторов и слоя мультимодальной
+  модели (VLM), которая детектит водяные знаки и пишет человекочитаемое объяснение.</p>
+  <div class="hero-meta">
+    <span>СТЕК · <b>Python · FastAPI · PyTorch · Vite</b></span>
+    <span>РЕЖИМ · <b>только CPU</b></span>
+    <span>МОДЕЛЕЙ В АНСАМБЛЕ · <b>3 + VLM</b></span>
+    <span>СИГНАЛОВ FORENSICS · <b>5</b></span>
+  </div>
+</div>
+
+<!-- ░░ 01 ░░ -->
+<section id="overview">
+  <div class="sec-head"><span class="sec-num">01</span><h2>Обзор проекта</h2></div>
+  <p class="sec-lead">Что это, зачем и какую задачу решает.</p>
+
+  <p><strong>Задача.</strong> Отличить настоящее фото от AI-генерации — нетривиально:
+  современные генераторы (Flux, Stable Diffusion 3, Midjourney v8, Google «Nano
+  Banana») дают фотореалистичный результат, на котором ошибаются и люди, и отдельные
+  детекторы. Одна модель ненадёжна — поэтому проект строит <strong>ансамбль</strong>:
+  несколько независимых источников сигнала, чьи ошибки слабо коррелируют, и аккуратная
+  логика их объединения.</p>
+
+  <p><strong>Что делает приложение.</strong> Пользователь загружает картинку (файлом
+  или по URL) на веб-странице. Бэкенд параллельно прогоняет её через три нейросети и
+  пять forensic-проверок, объединяет результаты во взвешенный вердикт
+  <code>ai</code> / <code>real</code> с оценкой уверенности, а затем мультимодальная
+  модель OpenAI проверяет наличие водяного знака и пишет понятное объяснение вердикта.</p>
+
+  <div class="card-grid">
+    <div class="mini"><h4>Вход</h4><p>JPEG / PNG / WEBP до 10 МБ, либо публичный URL изображения.</p></div>
+    <div class="mini"><h4>Обработка</h4><p>3 нейросети + 5 forensic-сигналов + VLM, всё параллельно через asyncio.</p></div>
+    <div class="mini"><h4>Выход</h4><p>Вердикт, AI-вероятность, уверенность, по-модельные оценки, watermark, текстовый разбор.</p></div>
+  </div>
+
+  <p><strong>Ключевые ограничения проекта (приняты осознанно).</strong> Работа только
+  на CPU — без CUDA, чтобы запускалось на любой машине. Монорепозиторий: бэкенд и
+  фронтенд в одном корне. Без базы данных, без авторизации, без деплоя — это
+  учебный MVP, а не продакшн-сервис.</p>
+</section>
+
+<!-- ░░ 02 ░░ -->
+<section id="stack">
+  <div class="sec-head"><span class="sec-num">02</span><h2>Технологический стек</h2></div>
+  <p class="sec-lead">Каждая технология и за что она отвечает.</p>
+
+  <h3>Бэкенд</h3>
+  <table>
+    <tr><th>Технология</th><th>Роль в проекте</th></tr>
+    <tr><td>Python 3.14</td><td>Язык бэкенда.</td></tr>
+    <tr><td>FastAPI</td><td>Веб-фреймворк: маршруты, валидация запросов, асинхронные эндпоинты.</td></tr>
+    <tr><td>Uvicorn</td><td>ASGI-сервер, на котором крутится FastAPI-приложение.</td></tr>
+    <tr><td>PyTorch (CPU)</td><td>Движок инференса нейросетей. Сборка без CUDA — экономит ~2 ГБ.</td></tr>
+    <tr><td>Transformers (Hugging Face)</td><td>Загрузка и запуск трёх предобученных моделей-детекторов.</td></tr>
+    <tr><td>Pillow</td><td>Декодирование, конвертация и ресайз изображений.</td></tr>
+    <tr><td>NumPy</td><td>Математика forensic-анализаторов (FFT, дисперсии шума, ELA).</td></tr>
+    <tr><td>httpx</td><td>Асинхронная загрузка изображений по URL.</td></tr>
+    <tr><td>Ultralytics (YOLO-World)</td><td>Оффлайн zero-shot детектор водяных знаков (fallback).</td></tr>
+    <tr><td>openai</td><td>SDK для VLM-слоя — vision-вызовы к OpenAI API.</td></tr>
+    <tr><td>Pydantic</td><td>Схемы запросов/ответов, строгая валидация данных.</td></tr>
+    <tr><td>python-dotenv</td><td>Чтение секретов (API-ключи) из <code>.env</code>.</td></tr>
+    <tr><td>pytest</td><td>Юнит-тесты агрегации, VLM-парсеров, watermark-шкалы.</td></tr>
+  </table>
+
+  <h3>Фронтенд</h3>
+  <table>
+    <tr><th>Технология</th><th>Роль в проекте</th></tr>
+    <tr><td>Vite 6</td><td>Сборщик и dev-сервер с прокси на бэкенд.</td></tr>
+    <tr><td>Vanilla JS (без фреймворка)</td><td>Логика интерфейса: drag-drop, fetch, рендер результатов. Фреймворк здесь избыточен.</td></tr>
+    <tr><td>CSS Custom Properties</td><td>Дизайн-токены: палитра, типографика, отступы, анимации в одном месте.</td></tr>
+    <tr><td>JetBrains Mono + Inter</td><td>Шрифтовая пара: моноширинный для «forensic»-акцентов, Inter для текста.</td></tr>
+  </table>
+</section>
+
+<!-- ░░ 03 ░░ -->
+<section id="arch">
+  <div class="sec-head"><span class="sec-num">03</span><h2>Архитектура и поток данных</h2></div>
+  <p class="sec-lead">Как устроен монорепозиторий и что происходит при анализе картинки.</p>
+
+  <p>Проект — монорепозиторий из двух частей. <strong>backend/</strong> — FastAPI-сервис
+  со всей ML-логикой. <strong>frontend/</strong> — статический сайт на Vite, тонкий
+  клиент к API. Они общаются по HTTP; в dev-режиме Vite проксирует <code>/api/*</code>
+  на бэкенд.</p>
+
+  <h3>Поток запроса /api/analyze</h3>
+  <div class="flow"><span class="hl">Картинка</span> → валидация (MIME, размер, SSRF для URL) → декод в RGB
+   │
+   ├─ <span class="hl">3 нейросети</span>     ┐
+   ├─ ELA-анализатор   │
+   ├─ EXIF-анализатор  ├─ всё параллельно: asyncio.gather
+   ├─ Шум-анализатор   │   (torch на CPU отпускает GIL)
+   ├─ FFT-анализатор   │
+   ├─ Watermark (YOLO) │
+   └─ <span class="hl2">VLM-вызов 1</span>       ┘  (watermark, сетевой, с таймаутом)
+   │
+   ▼
+  <span class="hl">aggregate()</span> — взвешенное объединение → ВЕРДИКТ ai / real
+   │
+   ▼
+  Ответ: вердикт + по-модельные оценки + сигналы + watermark</div>
+
+  <p>Затем фронтенд отдельным запросом <code>/api/explain</code> просит VLM написать
+  текстовое объяснение уже готового вердикта — это не задерживает показ результата.</p>
+
+  <div class="callout good">
+    <div class="label">Почему параллельно</div>
+    <p>Инференс на CPU медленный. Если гонять 3 модели и 5 анализаторов
+    последовательно — это десятки секунд подряд. <code>asyncio.to_thread</code> +
+    <code>asyncio.gather</code> запускают их одновременно: PyTorch на CPU отпускает
+    GIL во время forward-прохода, поэтому потоки реально работают параллельно.</p>
+  </div>
+</section>
+
+<!-- ░░ 04 ░░ -->
+<section id="api">
+  <div class="sec-head"><span class="sec-num">04</span><h2>API: эндпоинты</h2></div>
+  <p class="sec-lead">Четыре маршрута FastAPI-сервиса.</p>
+
+  <table>
+    <tr><th>Метод · путь</th><th>Назначение</th></tr>
+    <tr><td class="mono-cell">GET /api/health</td><td>Проверка живости сервиса. Возвращает <code>{"status":"ok"}</code>.</td></tr>
+    <tr><td class="mono-cell">POST /api/analyze</td><td>Анализ загруженного файла (<code>multipart/form-data</code>). Возвращает полный вердикт.</td></tr>
+    <tr><td class="mono-cell">POST /api/analyze-url</td><td>То же, но картинка берётся по URL (JSON <code>{url}</code>). Есть защита от SSRF.</td></tr>
+    <tr><td class="mono-cell">POST /api/explain</td><td>VLM пишет текстовое объяснение вердикта. Принимает картинку повторно + результат анализа.</td></tr>
+  </table>
+
+  <h3>Что в ответе /api/analyze</h3>
+  <pre><span class="c">{</span>
+  <span class="k">"models"</span>: [ {name, ai_prob, real_prob, patch_max_ai} × 3 ],
+  <span class="k">"ensemble"</span>: {
+     ai_prob, real_prob, verdict, confidence, disagreement,
+     ela_score, exif_score, noise_score, fft_score, watermark_score
+  },
+  <span class="k">"elapsed_ms"</span>: 25710,
+  <span class="k">"vlm_watermark"</span>: {watermark_found, watermark_type, watermark_confidence}
+<span class="c">}</span></pre>
+
+  <div class="callout warn">
+    <div class="label">Безопасность: защита от SSRF</div>
+    <p>Эндпоинт <code>analyze-url</code> мог бы стать дырой: злоумышленник укажет
+    URL вида <code>http://127.0.0.1/...</code> и заставит сервер ходить во внутреннюю
+    сеть. Поэтому <code>load_from_url</code> резолвит хост и отклоняет приватные,
+    loopback, link-local и зарезервированные адреса, а также не-HTTP схемы.</p>
+  </div>
+</section>
+
+<!-- ░░ 05 ░░ -->
+<section id="models">
+  <div class="sec-head"><span class="sec-num">05</span><h2>Ансамбль моделей</h2></div>
+  <p class="sec-lead">Три нейросети-детектора, их архитектуры и роли.</p>
+
+  <p>Ядро системы — три предобученные модели с Hugging Face. Главный принцип выбора —
+  <strong>архитектурное разнообразие</strong>: модели на разных трансформерных
+  backbone'ах ошибаются по-разному, и их ошибки слабо коррелируют. Если бы взяли три
+  похожие модели — они бы дружно ошибались на одних и тех же картинках, и ансамбль
+  не дал бы ничего.</p>
+
+  <table>
+    <tr><th>Модель</th><th>Архитектура</th><th>Вес</th><th>Роль в ансамбле</th></tr>
+    <tr><td>Ateeqq/ai-vs-human-image-detector</td><td>SigLIP</td><td>0.30</td><td>Агрессивная — хорошо ловит AI (high-recall), но склонна к ложным срабатываниям.</td></tr>
+    <tr><td>haywoodsloan/ai-image-detector-deploy</td><td>SwinV2</td><td>0.35</td><td>Консервативная — уверенно подтверждает реальные фото (high-precision Real).</td></tr>
+    <tr><td>umm-maybe/AI-image-detector</td><td>ViT</td><td>0.35</td><td>Арбитр / тай-брейкер — третий независимый голос, когда первые два спорят.</td></tr>
+  </table>
+
+  <p>Связка устроена осмысленно: одна модель «перебдительная», другая «недоверчивая»,
+  третья — нейтральный судья. На спорной картинке агрессивная кричит «AI!»,
+  консервативная — «real!», а ViT-арбитр склоняет чашу весов. Логика агрегации
+  (раздел 08) умеет этим пользоваться.</p>
+
+  <h3>Patch-based detection — анализ по фрагментам</h3>
+  <p>Модель смотрит на картинку целиком в разрешении 224×224. Но AI-объект,
+  вставленный в реальное фото (composite), на уменьшенном общем снимке «растворяется».
+  Поэтому картинка дополнительно режется на сетку <strong>3×3 патча с 50% перекрытием</strong>
+  (9 фрагментов), и каждый прогоняется отдельно. <code>patch_max_ai</code> — максимальная
+  AI-вероятность среди патчей — ловит локальную подмену. Перекрытие гарантирует, что
+  объект на стыке фрагментов попадёт целиком хотя бы в один патч.</p>
+</section>
+
+<!-- ░░ 06 ░░ -->
+<section id="why-models">
+  <div class="sec-head"><span class="sec-num">06</span><h2>Почему именно эти модели</h2></div>
+  <p class="sec-lead">Исходный список из ТЗ был пересмотрен — вот почему.</p>
+
+  <p>В техзадании предлагался другой набор моделей. При проверке оказалось, что он
+  устарел или непригоден, и каждую замену пришлось обосновать.</p>
+
+  <table>
+    <tr><th>Модель</th><th>Статус</th><th>Причина решения</th></tr>
+    <tr><td>Ateeqq/ai-vs-human</td><td><span class="badge b-keep">взята</span></td><td>Современный SigLIP-детектор, заявленная accuracy 99%. Сильный high-recall источник.</td></tr>
+    <tr><td>haywoodsloan/...-deploy</td><td><span class="badge b-keep">взята</span></td><td>SwinV2 ~0.2B параметров, accuracy ~98%. Оригинал был удалён с HF — используется перевыложенная deploy-версия.</td></tr>
+    <tr><td>umm-maybe/AI-image-detector</td><td><span class="badge b-defer">взята с оговоркой</span></td><td>Обучена в 2022 на ранних AI-картинках, слаба на современных Flux/SD3/MJ — как самостоятельный детектор плоха. Но в роли третьего независимого голоса (ViT-архитектура) усиливает медиану при разногласии. Поэтому возвращена именно как арбитр.</td></tr>
+    <tr><td>Organika/sdxl-detector</td><td><span class="badge b-drop">отклонена</span></td><td>Узкий специалист только по SDXL. На других генераторах бесполезна — ансамблю нужен широкий охват.</td></tr>
+    <tr><td>boluobobo/ItsNotAI-v2</td><td><span class="badge b-drop">отклонена</span></td><td>В <code>config.json</code> не заполнен <code>id2label</code>. На деле это 33-классовый dual-head классификатор; стандартный загрузчик берёт неверную голову, и модель на ЛЮБОМ входе выдаёт <code>ai_prob ≈ 1.0</code>, ломая ансамбль.</td></tr>
+  </table>
+
+  <div class="callout good">
+    <div class="label">Вывод</div>
+    <p>Финальная тройка SigLIP + SwinV2 + ViT — это три разных трансформерных
+    предобучения. Разнообразие архитектур — главная причина, по которой ансамбль
+    точнее любой отдельной модели.</p>
+  </div>
+
+  <h3>Нормализация меток</h3>
+  <p>У каждой модели свой формат меток: <code>ai/hum</code>, <code>ai/human</code>,
+  <code>REAL/FAKE</code>. Детектор приводит всё к единому <code>{ai_prob, real_prob}</code>,
+  читая <code>id2label</code> каждой модели и сопоставляя по ключевым словам.</p>
+</section>
+
+<!-- ░░ 07 ░░ -->
+<section id="forensics">
+  <div class="sec-head"><span class="sec-num">07</span><h2>Forensic-анализаторы</h2></div>
+  <p class="sec-lead">Пять сигналов, которые ищут следы генерации без нейросетей.</p>
+
+  <p>Нейросети дают вероятность «на глаз». Forensic-анализаторы — другой,
+  независимый класс сигналов: они ищут <strong>физические следы</strong> генерации
+  или монтажа в самих пикселях и метаданных. Их сила в том, что они ошибаются не
+  там, где нейросети.</p>
+
+  <div class="card-grid">
+    <div class="mini"><h4>ELA — Error Level Analysis</h4><p>Пересжимает JPEG и смотрит на остаточную «энергию». Вставленная область сжималась иначе, чем фон. Доп. метрика <code>hotspot_ratio</code> ловит локальные подмены (composite, inpainting), когда 95% кадра чистые.</p></div>
+    <div class="mini"><h4>EXIF — метаданные</h4><p>AI-софт в поле Software → score 0.95. Данные камеры (Make/Model) → 0.05 (признак реального фото). Нет EXIF вообще → 0.3 (соцсети их вырезают).</p></div>
+    <div class="mini"><h4>Шум — консистентность</h4><p>В реальном снимке шум сенсора равномерен по кадру. AI-текстуры дают другую дисперсию шума. Считается коэффициент вариации локальных дисперсий.</p></div>
+    <div class="mini"><h4>FFT — спектр</h4><p>GAN и диффузия оставляют следы в частотном спектре. Анализируется разброс радиальных спектральных профилей между патчами.</p></div>
+    <div class="mini"><h4>Watermark — водяные знаки</h4><p>Видимые знаки AI-генераторов: YOLO-World (zero-shot по текстовым промптам) + ключевые слова в метаданных + маркеры C2PA.</p></div>
+  </div>
+
+  <p>Каждый анализатор отдаёт число <code>0..1</code>. Эти сигналы не голосуют
+  напрямую — они <strong>корректируют</strong> вердикт ансамбля (см. раздел 08).</p>
+</section>
+
+<!-- ░░ 08 ░░ -->
+<section id="ensemble">
+  <div class="sec-head"><span class="sec-num">08</span><h2>Логика агрегации</h2></div>
+  <p class="sec-lead">Как голоса моделей и сигналы превращаются в один вердикт.</p>
+
+  <p>Наивное среднее трёх моделей не работает: первый MVP давал «вердикт-монетку».
+  Функция <code>aggregate()</code> прошла через серьёзную доработку (этап «1.5»).</p>
+
+  <h3>Медиана при разногласии</h3>
+  <p>Если стандартное отклонение AI-вероятностей моделей превышает <strong>0.25</strong> —
+  модели сильно спорят. Тогда вместо среднего берётся <strong>медиана</strong>: она
+  выбрасывает экстремиста. Пример: Ateeqq=0.99, две другие ~0.2 → среднее 0.47
+  (монетка), а медиана 0.2 (внятный вердикт).</p>
+
+  <h3>Patch_max только когда уже подозрительно</h3>
+  <p>Максимум по патчам повышает вердикт, только если общий score уже ≥ 0.4. Иначе
+  один странный патч на чистом фото мог бы перевернуть вердикт.</p>
+
+  <h3>Двусторонние сигналы</h3>
+  <p>Forensic-сигналы тянут вердикт в обе стороны — это ключевое:</p>
+  <ul>
+    <li><strong>AI-сигналы</strong> (ELA ≥ 0.6, EXIF ≥ 0.85, FFT ≥ 0.7, watermark ≥ 0.9) толкают вердикт вверх через <code>max()</code>.</li>
+    <li><strong>REAL-сигналы</strong> тянут вниз: данные камеры в EXIF + молчащие forensics → потолок 0.45; все forensics молчат → score умножается на 0.8 (страховка от одной слишком агрессивной модели).</li>
+  </ul>
+
+  <h3>Temperature scaling</h3>
+  <p>Перед softmax логиты делятся на <strong>1.5</strong> — это смягчает
+  «переуверенность» моделей, которые любят выдавать 0.99/0.01.</p>
+
+  <div class="callout good">
+    <div class="label">Итоговые поля вердикта</div>
+    <p><code>verdict</code> = ai/real по порогу 0.5 · <code>confidence</code> =
+    |0.5 − ai_prob| × 2 · <code>disagreement</code> = флаг сильного спора моделей.</p>
+  </div>
+</section>
+
+<!-- ░░ 09 ░░ -->
+<section id="vlm">
+  <div class="sec-head"><span class="sec-num">09</span><h2>VLM-слой (OpenAI)</h2></div>
+  <p class="sec-lead">Мультимодальная модель: детект водяных знаков + объяснение вердикта.</p>
+
+  <p>Финальный этап проекта — подключение мультимодальной модели OpenAI
+  (<code>gpt-4o</code>, vision). Здесь было важное проектное решение.</p>
+
+  <h3>Почему VLM — НЕ голосующая модель ансамбля</h3>
+  <p>Заманчиво добавить VLM четвёртым голосом. Но современные мультимодалки —
+  <strong>плохие классификаторы «AI или нет»</strong>: на фотореализме они уверенно
+  ошибаются, их вывод недетерминирован и не лезет в фиксированные веса. Зато VLM
+  <strong>отлично</strong> справляется с одной частью задачи — детектом водяных
+  знаков, потому что это по сути OCR + распознавание логотипа. Поэтому VLM доверили
+  ровно этот кусок и плюс — текстовое объяснение.</p>
+
+  <h3>«Вариант B» — два отдельных вызова</h3>
+  <table>
+    <tr><th>Вызов</th><th>Где</th><th>Когда</th><th>Влияние на вердикт</th></tr>
+    <tr><td>1 · Watermark</td><td>внутри /api/analyze, параллельно с ансамблем</td><td>до агрегации</td><td><strong>Да</strong> — кормит watermark_score</td></tr>
+    <tr><td>2 · Объяснение</td><td>отдельный /api/explain</td><td>после вердикта</td><td>Нет — только текст</td></tr>
+  </table>
+  <p>Два вызова, потому что watermark обязан отработать <em>до</em> вердикта, а
+  объяснение — наоборот, должно <em>знать</em> готовый вердикт, чтобы связно его
+  объяснить. Один вызов обе роли качественно не закрывает.</p>
+
+  <h3>Как watermark от VLM влияет на вердикт</h3>
+  <p>Итоговый <code>watermark_score = max(оффлайн-сигнал, VLM-сигнал)</code>. VLM —
+  приоритетный источник, YOLO-World остаётся оффлайн-fallback'ом. Уверенность VLM
+  переводится в score по линейной шкале <code>0.40 + 0.55 × confidence</code>:
+  срабатывание детектора не означает автоматически «AI на 100%».</p>
+
+  <h3>Graceful fallback</h3>
+  <p>Нет ключа <code>OPENAI_API_KEY</code> — VLM-слой тихо отключается: watermark
+  считается по YOLO, <code>/api/explain</code> отдаёт заглушку с
+  <code>available:false</code>. Система остаётся полностью запускаемой. Сетевой
+  вызов 1 обёрнут в таймаут — если OpenAI тормозит, watermark откатывается на YOLO,
+  а не вешает запрос.</p>
+
+  <div class="callout warn">
+    <div class="label">Почему именно так, а не иначе</div>
+    <p>VLM пускают в вердикт только через watermark — там, где он надёжен — и не
+    пускают в оценку «AI vs real», где он ошибается. Это осознанный компромисс:
+    взять от модели её сильную сторону и не подставиться под слабую.</p>
+  </div>
+</section>
+
+<!-- ░░ 10 ░░ -->
+<section id="frontend">
+  <div class="sec-head"><span class="sec-num">10</span><h2>Фронтенд</h2></div>
+  <p class="sec-lead">Одностраничный сайт на Vite — тонкий клиент к API.</p>
+
+  <p>Фронтенд написан на чистом JavaScript без фреймворка — для одной страницы с
+  загрузкой файла React был бы избыточен. Сборка — Vite 6.</p>
+
+  <h3>Дизайн: dark terminal / forensic</h3>
+  <p>Намеренная стилистика — отсылка к CLI и судебно-аналитическим инструментам:
+  глубокий чёрный фон, моноширинная типографика, два семантических цвета — зелёный
+  «сигнал» и красный «алерт». Вся палитра, типографика и отступы вынесены в
+  CSS-переменные (дизайн-токены), компоненты разложены по папкам.</p>
+
+  <h3>Поток в интерфейсе</h3>
+  <ul>
+    <li><strong>Dropzone</strong> — drag-drop зоны и поле URL, переключение вкладок файл/URL.</li>
+    <li><strong>Карточки результата</strong> — крупный вердикт, прогресс-бары AI/REAL по каждой модели, строка водяного знака.</li>
+    <li><strong>Блок VLM-разбора</strong> — после вердикта фронт асинхронно зовёт <code>/api/explain</code>; пока ответ идёт — спиннер, затем текст объяснения, список признаков и «оговорка», если VLM не согласен с вердиктом.</li>
+  </ul>
+
+  <div class="callout warn">
+    <div class="label">Безопасность: защита от XSS</div>
+    <p>Текст объяснения приходит от языковой модели — это менее доверенный источник,
+    чем собственный код. Перед вставкой в DOM все строки от VLM экранируются
+    (<code>escapeHtml</code>), чтобы ответ модели не мог внедрить разметку или скрипт.</p>
+  </div>
+</section>
+
+<!-- ░░ 11 ░░ -->
+<section id="dropped">
+  <div class="sec-head"><span class="sec-num">11</span><h2>Что выкинули и почему</h2></div>
+  <p class="sec-lead">Решения, принятые по ходу разработки против переусложнения.</p>
+
+  <table>
+    <tr><th>Что</th><th>Статус</th><th>Причина и чем заменено</th></tr>
+    <tr><td>Grad-CAM (heatmap-объяснимость)</td><td><span class="badge b-drop">отказ</span></td><td>Требует кастомных backward-хуков, медленно на CPU. Заменено на patch-based detection — она даёт локализацию без обратного прохода.</td></tr>
+    <tr><td>TrUFor (детектор манипуляций)</td><td><span class="badge b-drop">отказ</span></td><td>Исследовательский репозиторий, не рассчитан на <code>torch.hub</code>: нужны mmcv, CUDA, ручная загрузка весов. Слишком дорого для курсовой. Эквивалент — ELA hotspot ratio.</td></tr>
+    <tr><td>Roboflow (обученный watermark-детектор)</td><td><span class="badge b-drop">отказ</span></td><td>Модель обучена всего на ~12–16 фото — много ложных срабатываний; SDK несовместим с Python 3.14. Заменён VLM-вызовом 1 (детект watermark точнее и не требует своей обучённой модели).</td></tr>
+    <tr><td>VLM как 4-я голосующая модель</td><td><span class="badge b-drop">отказ</span></td><td>Мультимодалки плохо классифицируют «AI vs real», вывод недетерминирован. VLM оставлен только для watermark и объяснения.</td></tr>
+    <tr><td>Chrome-расширение</td><td><span class="badge b-defer">отложено</span></td><td>Вынесено в отдельный «Этап 2» — расширение будет тонким клиентом к уже готовому API.</td></tr>
+  </table>
+
+  <div class="callout good">
+    <div class="label">Принцип</div>
+    <p>Каждый отказ — это выбор простого работающего решения вместо сложного
+    спекулятивного. Минимум кода, который решает задачу; ничего «на будущее».</p>
+  </div>
+</section>
+
+<!-- ░░ 12 ░░ -->
+<section id="scope">
+  <div class="sec-head"><span class="sec-num">12</span><h2>Что было бы лишним</h2></div>
+  <p class="sec-lead">Сознательно вне рамок MVP — и почему это правильно.</p>
+
+  <div class="card-grid">
+    <div class="mini"><h4>База данных и история</h4><p>Хранить запросы негде и незачем — приложение не ведёт аккаунты. Анализ stateless.</p></div>
+    <div class="mini"><h4>Авторизация · rate limiting</h4><p>Сервис локальный, одного пользователя. Защита от перебора здесь — переусложнение.</p></div>
+    <div class="mini"><h4>Docker · nginx · деплой</h4><p>Учебный MVP запускается локально командой. Контейнеризация — отдельная большая тема вне ТЗ.</p></div>
+    <div class="mini"><h4>Видео и GIF</h4><p>Задача — статичные изображения. Покадровый анализ видео — другой проект.</p></div>
+    <div class="mini"><h4>Своё обучение моделей</h4><p>Используются готовые предобученные сети. Обучение детектора с нуля — не цель курсовой.</p></div>
+    <div class="mini"><h4>Heatmap в UI</h4><p>Patch-grid считается внутри, но не выводится: для MVP достаточно числового вердикта.</p></div>
+  </div>
+  <p>Граница MVP проведена осознанно: всё, что не приближает к цели «определить
+  AI или нет», вынесено за скобки. Это удерживает проект завершаемым.</p>
+</section>
+
+<!-- ░░ 13 ░░ -->
+<section id="limits">
+  <div class="sec-head"><span class="sec-num">13</span><h2>Известные ограничения</h2></div>
+  <p class="sec-lead">Честный список того, что стоит знать.</p>
+
+  <div class="callout bad">
+    <div class="label">Производительность</div>
+    <p>Полный анализ на CPU занимает ~21–27 секунд (замер на тестовой машине) —
+    это превышает ориентир ТЗ в 10 секунд. Причина — инференс трёх трансформеров
+    по 9 патчей на CPU. VLM-вызов к этому не добавляет: он идёт параллельно и
+    «прячется» под время ансамбля.</p>
+  </div>
+  <div class="callout warn">
+    <div class="label">Приватность</div>
+    <p>При работающем VLM-слое изображение уходит на серверы OpenAI. Для учебного
+    проекта приемлемо, но это нужно указать в ограничениях работы.</p>
+  </div>
+  <div class="callout warn">
+    <div class="label">Стоимость и точка отказа</div>
+    <p>VLM-слой — это платные вызовы внешнего API и зависимость от интернета. Без
+    ключа система продолжает работать (watermark на YOLO, объяснение недоступно).</p>
+  </div>
+  <div class="callout warn">
+    <div class="label">Точность детекции</div>
+    <p>Ни один детектор не идеален. Цель — надёжный ансамблевый вердикт на типовых
+    кейсах, а не 100% гарантия. Сложные composite-картинки остаются трудными.</p>
+  </div>
+</section>
+
+<!-- ░░ 14 ░░ -->
+<section id="run">
+  <div class="sec-head"><span class="sec-num">14</span><h2>Запуск</h2></div>
+  <p class="sec-lead">Как поднять проект локально.</p>
+
+  <h3>Бэкенд</h3>
+  <pre><span class="c"># из папки backend/</span>
+python -m venv venv
+venv\Scripts\activate
+pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+pip install -r requirements.txt
+python run.py        <span class="c"># поднимет API на :8000</span></pre>
+  <p>Первый запуск скачает ~800 МБ весов моделей в кэш Hugging Face. Для VLM-слоя —
+  прописать <code>OPENAI_API_KEY</code> в <code>backend/.env</code> (без него слой
+  отключается gracefully).</p>
+
+  <h3>Фронтенд</h3>
+  <pre><span class="c"># из папки frontend/</span>
+npm install
+npm run dev          <span class="c"># откроет сайт на :5173</span></pre>
+
+  <h3>Тесты</h3>
+  <pre>pytest backend/tests/   <span class="c"># агрегация, VLM-парсеры, watermark-шкала</span></pre>
+</section>
+
+<!-- ░░ 15 ░░ -->
+<section id="tree">
+  <div class="sec-head"><span class="sec-num">15</span><h2>Структура файлов</h2></div>
+  <p class="sec-lead">Карта проекта — что где лежит.</p>
+
+  <pre>курсовая работа/
+├── plan.md                     <span class="c"># план и история решений</span>
+├── documentation.html          <span class="c"># этот файл</span>
+│
+├── backend/
+│   ├── run.py                  <span class="c"># entrypoint uvicorn</span>
+│   ├── requirements.txt
+│   ├── .env                    <span class="c"># секреты (OPENAI_API_KEY)</span>
+│   └── app/
+│       ├── main.py             <span class="c"># FastAPI: эндпоинты, поток анализа</span>
+│       ├── config.py           <span class="c"># модели, веса, пороги, ключи</span>
+│       ├── schemas.py          <span class="c"># Pydantic-схемы запрос/ответ</span>
+│       ├── ml/
+│       │   ├── detector.py     <span class="c"># ModelRegistry: загрузка 3 моделей</span>
+│       │   ├── ensemble.py     <span class="c"># aggregate() — логика вердикта</span>
+│       │   ├── ela.py          <span class="c"># Error Level Analysis</span>
+│       │   ├── exif_analyzer.py
+│       │   ├── noise_analyzer.py
+│       │   ├── fft_analyzer.py
+│       │   └── watermark_analyzer.py  <span class="c"># YOLO-World + метаданные</span>
+│       ├── llm/
+│       │   ├── client.py       <span class="c"># общий слой OpenAI</span>
+│       │   ├── watermark.py    <span class="c"># VLM-вызов 1 — watermark</span>
+│       │   └── explainer.py    <span class="c"># VLM-вызов 2 — объяснение</span>
+│       └── utils/
+│           ├── image.py        <span class="c"># загрузка, валидация, SSRF-защита</span>
+│           └── errors.py       <span class="c"># маппинг ошибок в HTTP</span>
+│
+└── frontend/
+    ├── index.html              <span class="c"># разметка страницы</span>
+    ├── vite.config.js          <span class="c"># прокси /api → бэкенд</span>
+    └── src/
+        ├── main.js
+        ├── styles/             <span class="c"># tokens / reset / global</span>
+        ├── components/         <span class="c"># analyzer, dropzone, result-card, …</span>
+        └── utils/
+            └── api.js          <span class="c"># fetch к /api/analyze, /api/explain</span></pre>
+</section>
+
+<div class="docfoot">
+  AI/DETECTIVE · документация проекта · курсовая работа ·
+  система определения AI-сгенерированных изображений
+</div>
+
+</main>
+</div>
+</body>
+</html>

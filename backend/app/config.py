@@ -12,12 +12,13 @@ MAX_FILE_SIZE = 10 * 1024 * 1024
 ALLOWED_MIME = {"image/jpeg", "image/png", "image/webp"}
 DEVICE = "cpu"
 
-TEMPERATURE = 1.5    # смягчает переуверенность softmax
-PATCH_SIZE = 224     # размер патча = входной размер моделей
-PATCH_STRIDE = 112   # 50% overlap → ловим объекты на границе патчей
-PATCH_MAX_DIM = 448  # 3×3=9 патчей с overlap, было 2×2=4 без overlap
+TEMPERATURE = 1.5
+PATCH_SIZE = 224
+PATCH_STRIDE = 112
+PATCH_MAX_DIM = 448
 
-# Roboflow — прямой вызов модели detect.roboflow.com
-ROBOFLOW_API_KEY:       str = os.environ.get("ROBOFLOW_API_KEY",       "")
-ROBOFLOW_MODEL_ID:      str = os.environ.get("ROBOFLOW_MODEL_ID",      "")
-ROBOFLOW_MODEL_VERSION: str = os.environ.get("ROBOFLOW_MODEL_VERSION", "1")
+OPENAI_API_KEY:      str   = os.environ.get("OPENAI_API_KEY",      "")
+OPENAI_VISION_MODEL: str   = os.environ.get("OPENAI_VISION_MODEL", "gpt-4o")
+VLM_TIMEOUT:         float = float(os.environ.get("VLM_TIMEOUT",         "30.0"))
+VLM_EXPLAIN_TIMEOUT: float = float(os.environ.get("VLM_EXPLAIN_TIMEOUT", "20.0"))
+VLM_MAX_IMAGE_DIM:   int   = int(os.environ.get("VLM_MAX_IMAGE_DIM",     "1024"))

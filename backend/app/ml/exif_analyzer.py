@@ -4,20 +4,17 @@ from PIL import Image
 from PIL.ExifTags import TAGS
 
 
-# Программы, однозначно указывающие на AI-генерацию.
 _AI_KEYWORDS = [
     "stable diffusion", "comfyui", "automatic1111", "novelai",
     "midjourney", "dall-e", "dall·e", "dreamstudio", "firefly",
     "imagen", "leonardo", "invoke", "fooocus", "koboldai",
 ]
 
-# Редакторы, которые могут говорить о постобработке/монтаже.
 _EDIT_KEYWORDS = [
     "photoshop", "gimp", "lightroom", "affinity photo",
     "capture one", "luminar", "pixelmator",
 ]
 
-# Порог: если exif_score >= этого значения — переопределяем вердикт на "ai".
 EXIF_OVERRIDE_THRESHOLD = 0.85
 
 
@@ -30,14 +27,6 @@ class ExifResult(TypedDict):
 
 
 def analyze_exif(image: Image.Image) -> ExifResult:
-    """Извлекает EXIF-сигналы и возвращает вероятность AI по метаданным.
-
-    Логика score:
-    - AI software в поле Software → 0.95 (сильный сигнал)
-    - Нет EXIF вообще → 0.3 (слабый, соцсети стрипают)
-    - Нет камеры + есть редактор → 0.4 (среднеслабый)
-    - Есть данные камеры → 0.05 (скорее реальный снимок)
-    """
     try:
         raw = image.getexif()
         exif_data: dict = dict(raw) if raw else {}

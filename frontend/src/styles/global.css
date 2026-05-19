@@ -4,7 +4,6 @@
   padding: 0 var(--gutter);
 }
 
-/* ── Buttons ─────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
 .btn {
@@ -51,7 +50,6 @@ button.btn { cursor: pointer; }
 
 .btn-lg { padding: 14px 22px; font-size: 13px; }
 
-/* ── Section base ────────────────────────────────────────── */
 .section {
   padding: var(--space-9) 0;
   border-bottom: 1px solid var(--line-1);
@@ -90,7 +88,6 @@ button.btn { cursor: pointer; }
   max-width: 560px;
 }
 
-/* ── Scroll reveal ───────────────────────────────────────── */
 .reveal {
   opacity: 0;
   transform: translateY(8px);
@@ -101,7 +98,6 @@ button.btn { cursor: pointer; }
 
 .reveal.in { opacity: 1; transform: translateY(0); }
 
-/* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 480px) {
   .container { padding: 0 16px; }
 }

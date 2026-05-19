@@ -134,6 +134,143 @@
   flex-shrink: 0;
 }
 
+/* ── Watermark note (VLM-вызов 1) ────────────────────────── */
+.ens-watermark {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--fg-4);
+  margin-bottom: var(--space-3);
+}
+
+.ens-watermark-found { color: var(--alert); }
+
+/* ── VLM explanation card (VLM-вызов 2) ──────────────────── */
+.results-explain {
+  border: 1px solid var(--line-2);
+  border-top: 2px solid var(--fg-3);
+  background: var(--bg-2);
+  padding: var(--space-6) var(--space-7);
+}
+
+.explain-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--line-1);
+}
+
+.explain-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+
+.explain-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  margin-left: auto;
+  background: var(--signal);
+  box-shadow: 0 0 8px var(--signal-glow);
+}
+
+.explain-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  color: var(--fg-3);
+}
+
+.loading-spinner-sm {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+}
+
+.explain-text {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--fg-1);
+}
+
+.explain-text-muted {
+  font-size: 15px;
+  color: var(--fg-3);
+  font-style: italic;
+}
+
+.explain-sublabel {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--fg-4);
+  margin: var(--space-6) 0 var(--space-3);
+}
+
+.explain-evidence {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.explain-evidence li {
+  position: relative;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-7);
+  background: var(--bg-1);
+  border-left: 2px solid var(--signal);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--fg-2);
+  transition: border-color var(--dur-base) var(--ease-out),
+              color var(--dur-base) var(--ease-out);
+}
+
+.explain-evidence li::before {
+  content: '▸';
+  position: absolute;
+  left: var(--space-4);
+  color: var(--signal);
+}
+
+.explain-evidence li:hover {
+  border-left-color: var(--fg-1);
+  color: var(--fg-1);
+}
+
+.explain-caveat {
+  margin-top: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border-left: 2px solid var(--caution);
+  background: rgba(245, 158, 11, 0.07);
+}
+
+.explain-caveat-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  color: var(--caution);
+  margin-bottom: var(--space-2);
+}
+
+.explain-caveat-text {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--caution);
+}
+
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 640px) {
   .results-models { grid-template-columns: 1fr; }

@@ -15,7 +15,6 @@ _HTTP_TIMEOUT_SECONDS = 8.0
 
 
 async def load_from_upload(file: UploadFile) -> Image.Image:
-    """Validate and decode an uploaded file into a PIL RGB image."""
     if file.content_type not in ALLOWED_MIME:
         raise AppError(415, f"Unsupported media type: {file.content_type}")
 
@@ -29,7 +28,6 @@ async def load_from_upload(file: UploadFile) -> Image.Image:
 
 
 async def load_from_url(url: str) -> Image.Image:
-    """Fetch an image by URL with SSRF protection. Returns PIL RGB image."""
     _assert_url_is_safe(url)
 
     try:
@@ -63,7 +61,6 @@ def _decode_image(content: bytes) -> Image.Image:
 
 
 def _assert_url_is_safe(url: str) -> None:
-    """Reject non-http(s) schemes and any host that resolves to a private IP."""
     parsed = urlparse(url)
 
     if parsed.scheme not in ("http", "https"):

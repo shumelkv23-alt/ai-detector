@@ -88,7 +88,7 @@
             └── reveal.js           # scroll reveal observer
 ```
 
-> Папка `extension/` отсутствует — расширение перенесено в «Что НЕ делаем (этап 2)».
+> Папка `extension/` отсутствует — её создаём на этапе 2 (см. «Этап 2 — Браузерное расширение»).
 
 ## Backend — ключевые файлы
 
@@ -453,9 +453,198 @@ Roboflow → если ничего не нашёл → YOLO-World. Это эко
 Цель: ≥85% правильных вердиктов на тестовом датасете 40 фото.
 Если не дотягиваем — добавить ещё одну модель в ансамбль или подключить альтернативный forensics-метод.
 
+## Этап 1.6 — VLM-слой (OpenAI vision): объяснение вердикта + watermark
+
+### Идея и согласованные решения
+
+К ансамблю подключается мультимодальная модель OpenAI (vision API). Обсудили
+три возможных роли VLM и зафиксировали выбор:
+
+- VLM **не** становится голосующей моделью ансамбля — современные мультимодалки
+  плохие AI-vs-real классификаторы (уверенно ошибаются на фотореализме
+  Flux/SD3/Midjourney), их вывод недетерминирован и не лезет в фиксированные веса.
+- VLM хорош ровно в одном куске задачи — **детекте водяных знаков** (это по сути
+  OCR + распознавание логотипа), поэтому именно watermark-сигнал ему доверяем.
+- Плюс VLM пишет **человекочитаемое объяснение вердикта** — для UI и защиты курсовой.
+
+**Выбран «Вариант B» — два отдельных вызова VLM:**
+
+| Вызов | Где | Когда | Влияние |
+|-------|-----|-------|---------|
+| 1. Watermark-детект | внутри `/api/analyze`, параллельно с ансамблем | до `aggregate()` | **влияет на вердикт** через `watermark_score` |
+| 2. Объяснение | отдельный эндпоинт `/api/explain` | после вердикта | не влияет, только текст |
+
+Почему два вызова, а не один: watermark обязан отработать до вердикта, а
+объяснение — наоборот, должно знать финальный вердикт, чтобы связно его
+объяснить. Один вызов обе роли качественно не закрывает (chicken-and-egg).
+
+### Ключевые архитектурные решения
+
+- **VLM-watermark заменяет Roboflow.** `_RoboflowDetector` и переменные
+  `ROBOFLOW_*` удалены из `watermark_analyzer.py`, `config.py`, `.env`.
+  YOLO-World остаётся оффлайн-fallback'ом, когда `OPENAI_API_KEY` не задан.
+- **`watermark_score = max(offline, vlm)`** — VLM приоритетный источник, YOLO +
+  метаданные дотягивают, когда VLM молчит. Шкала VLM — та же линейная
+  `0.40 + 0.55 * confidence`, порог override в `aggregate()` (0.9) не трогаем.
+- **Вызов 1 — конкурентно, без роста времени.** Уходит в тот же `asyncio.gather`,
+  что и HF-модели, обёрнут в `asyncio.wait_for(VLM_TIMEOUT=30с)`. Сетевой вызов
+  идёт параллельно с CPU-инференсом и прячется под его время — замер: `/api/analyze`
+  на тестовой картинке ≈25,7 с и с VLM, и без. По таймауту/ошибке watermark тихо
+  падает на YOLO.
+  **Важно (пре-существующее):** сам ансамбль на этой машине идёт ~25 с, то есть
+  заявленный в ТЗ SLA 10 с уже превышен инференсом моделей — VLM-слой к этому
+  отношения не имеет (без ключа возвращает `None` мгновенно). Таймаут VLM
+  изначально стоял 7 с под «SLA 10 с»; раз SLA фактически недостижим, поднят до
+  30 с, чтобы вызов успевал завершиться под прикрытием времени ансамбля.
+- **`/api/explain` — без серверного состояния.** Гибкий multipart-эндпоинт:
+  поля `analysis` (JSON с `ensemble` + `vlm_watermark`), `file` ИЛИ `url`.
+  Картинку фронт пересылает повторно (держит `File`/`url` в руках) — никакого
+  in-memory кэша, это противоречило бы принципу «без БД/истории».
+- **Graceful fallback.** Нет `OPENAI_API_KEY` → вызов 1 возвращает `None`
+  (watermark на YOLO), `/api/explain` отдаёт 200 с заглушкой и `available=false`.
+- **VLM-вызов через `AsyncOpenAI`** + `response_format={"type":"json_object"}` —
+  устойчиво ко всем версиям SDK 1.x; ответ парсится `json.loads` с защитной
+  валидацией полей.
+
+### Новые файлы и изменения
+
+```
+backend/app/llm/
+├── __init__.py
+├── client.py        # ленивый AsyncOpenAI, downscale+base64, is_enabled()
+├── watermark.py     # вызов 1: detect_watermark_vlm() → VlmWatermark | None
+└── explainer.py     # вызов 2: explain_verdict() → ExplainResult | None
+```
+
+- `config.py`: `+ OPENAI_API_KEY, OPENAI_VISION_MODEL, VLM_TIMEOUT,`
+  `VLM_EXPLAIN_TIMEOUT, VLM_MAX_IMAGE_DIM`; `− ROBOFLOW_*`.
+- `requirements.txt`: `+ openai`.
+- `schemas.py`: `+ VlmWatermark, ExplainContext, ExplainResponse`;
+  `AnalyzeResponse.vlm_watermark: VlmWatermark | None`.
+- `watermark_analyzer.py`: удалён Roboflow; `+ watermark_score_from_vlm()`.
+- `main.py`: вызов 1 в `_run_ensemble`, новый эндпоинт `/api/explain`.
+
+### Подводные камни (в отчёт курсовой)
+
+- **Приватность.** Картинка уходит на серверы OpenAI — зафиксировать в
+  ограничениях (как уже отмечено для расширения).
+- **Стоимость.** Два платных вызова на полностью разобранную картинку.
+- **Точка отказа.** Нет интернета/ключа → система остаётся запускаемой
+  (watermark на YOLO, объяснение недоступно), но часть функций отключена.
+
+## Этап 2 — Браузерное расширение (СЛЕДУЮЩАЯ СЕССИЯ)
+
+> Решено делать как «плюс» к курсовой. Стартуем со следующей сессии.
+
+### Цель и ключевое решение
+
+Расширение для Chrome (Manifest V3): ПКМ по любой картинке на сайте → проверка
+через **уже существующий** бэкенд. ML-логику и эндпоинты НЕ трогаем — расширение
+это тонкий клиент к `/api/analyze-url` и `/api/analyze`. Проект для этого готов
+наполовину: `analyze-url` уже принимает URL картинки и возвращает вердикт.
+
+### Архитектура
+
+```
+браузер (ПКМ по <img>) → extension service worker
+  → POST http://localhost:8000/api/analyze-url
+  → вердикт в попапе + бейдж-оверлей поверх картинки
+```
+
+Два пути получения картинки:
+1. **По URL** (основной) — `analyze-url`, у `<img>` есть `src`.
+2. **По байтам** (fallback) — для `data:`-картинок, ленивой подгрузки и картинок
+   за авторизацией: service worker сам делает `fetch(srcUrl)` → blob →
+   `POST /api/analyze` (multipart).
+
+### Структура `extension/`
+
+```
+extension/
+├── manifest.json        # MV3: permissions, host_permissions, service worker
+├── background.js        # service worker: context menu + fetch к бэкенду
+├── content.js           # бейдж-оверлей поверх проверенной картинки
+├── content.css          # стили бейджа (forensic-палитра из tokens.css)
+├── popup/
+│   ├── popup.html       # окно: последний результат + ручной ввод URL
+│   ├── popup.js
+│   └── popup.css
+└── icons/               # 16 / 48 / 128 px
+```
+
+### manifest.json — ключевое
+
+- `"manifest_version": 3`
+- `"permissions": ["contextMenus", "activeTab", "storage"]`
+- `"host_permissions": ["http://localhost:8000/*"]` — даёт service worker право
+  на cross-origin fetch к бэкенду **мимо page-CORS**. Поэтому CORS на бэкенде
+  менять НЕ нужно.
+- `"background": { "service_worker": "background.js" }`
+- `"content_scripts"` — `content.js` + `content.css` на `<all_urls>`.
+- `"action"` — попап.
+
+### Backend — что (не) менять
+
+- **CORS трогать не нужно** — extension fetch через `host_permissions` не
+  подчиняется page-CORS.
+- `GET /api/health` уже есть — попап пингует его и показывает статус
+  «бэкенд онлайн / оффлайн».
+- **SSRF** — `load_from_url` (`utils/image.py`) уже отклоняет приватные сети
+  и `file://`. Перед любым публичным хостингом перепроверить, что фильтр живой.
+
+### Build-order
+
+После каждого шага: `git add -A && git commit && git push origin dev`.
+
+**Шаг 2.1 — Скелет расширения**
+- Создать `extension/` с `manifest.json`, пустым `background.js`, иконками.
+- Загрузить через `chrome://extensions` → Load unpacked, убедиться что грузится
+  без ошибок.
+- Пуш: `feat(extension): scaffold MV3 manifest and service worker`
+
+**Шаг 2.2 — Context menu + запрос к API**
+- `background.js`: `chrome.contextMenus.create` с `contexts: ["image"]`.
+- По клику — `info.srcUrl` → `POST /api/analyze-url`.
+- Результат пока в `console.log` + `chrome.storage.local`.
+- Пуш: `feat(extension): add image context menu calling analyze-url`
+
+**Шаг 2.3 — Попап с результатом**
+- `popup.html/js/css` — показывает последний вердикт из `chrome.storage.local`:
+  verdict-бейдж (ai = `--alert`, real = `--signal`), confidence, по-модельные
+  ai_prob.
+- Поле ручного ввода URL + кнопка.
+- Индикатор статуса бэкенда через `/api/health`.
+- Пуш: `feat(extension): add popup with verdict display and health check`
+
+**Шаг 2.4 — Бейдж-оверлей на странице**
+- `content.js` — после ответа рисует абсолютно спозиционированный бейдж в углу
+  `<img>` (verdict + confidence).
+- `content.css` — forensic-стиль, моно-шрифт, `--signal`/`--alert`.
+- Состояние loading — спиннер только через `opacity`/`transform`.
+- Пуш: `feat(extension): overlay verdict badge on checked images`
+
+**Шаг 2.5 — Fallback по байтам**
+- Если `srcUrl` это `data:` либо fetch по URL упал → service worker
+  `fetch(srcUrl)` → blob → `FormData` → `POST /api/analyze`.
+- Пуш: `feat(extension): fallback to byte upload for data-URI images`
+
+**Шаг 2.6 — Документация**
+- README: раздел «Браузерное расширение» — установка unpacked, требование
+  запущенного бэкенда.
+- Пуш: `docs: document browser extension setup`
+
+### Подводные камни (зафиксировать в отчёте курсовой)
+
+- **Хостинг.** Пока бэкенд на `localhost` — расширение работает только при
+  запущенном локальном сервере. Реальная польза — после деплоя (вне MVP).
+- **Приватность.** URL каждой проверяемой картинки уходит на сервер — упомянуть
+  в ограничениях работы.
+- **Лимиты `analyze-url`.** Картинки за авторизацией и `data:` закрывает Шаг 2.5.
+- **SLA.** Инференс ~4-7 с — в попапе и бейдже обязателен видимый loading-стейт.
+
 ## Что НЕ делаем (вне MVP)
 
-- **Chrome-расширение — этап 2**. Вернёмся после того, как веб-сайт полностью готов и протестирован. Бэкенд API уже будет совместим (CORS под `chrome-extension://*` добавим на этапе 2).
+- **Chrome-расширение** — вынесено в отдельный «Этап 2» (см. раздел выше), делаем со следующей сессии. В MVP не входит.
 - **Grad-CAM / heatmap-визуализация в UI** — не делаем. `patch_grid` внутри детектора считается, но в API не выставляется. Если понадобится для защиты — добавим поле в `AnalyzeResponse`.
 - Деплой / Docker / nginx
 - БД и хранение истории запросов

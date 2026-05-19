@@ -21,11 +21,30 @@ class EnsembleResult(BaseModel):
     watermark_score: float = Field(ge=0.0, le=1.0)
 
 
+class VlmWatermark(BaseModel):
+    watermark_found: bool
+    watermark_type: str
+    watermark_confidence: float = Field(ge=0.0, le=1.0)
+
+
 class AnalyzeResponse(BaseModel):
     models: list[ModelResult]
     ensemble: EnsembleResult
     elapsed_ms: int
+    vlm_watermark: VlmWatermark | None = None
 
 
 class AnalyzeUrlRequest(BaseModel):
     url: str
+
+
+class ExplainContext(BaseModel):
+    ensemble: EnsembleResult
+    vlm_watermark: VlmWatermark | None = None
+
+
+class ExplainResponse(BaseModel):
+    explanation: str
+    evidence: list[str]
+    caveat: str | None = None
+    available: bool

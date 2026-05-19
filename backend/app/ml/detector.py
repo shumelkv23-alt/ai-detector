@@ -18,18 +18,10 @@ class PatchedPrediction(TypedDict):
     patch_grid: list[list[float]]
 
 
-# Keywords that indicate a real/human photo. "hum" covers both "human" and the
-# "hum" shorthand used by Ateeqq/ai-vs-human-image-detector (id2label = {0:"ai", 1:"hum"}).
 _REAL_KEYWORDS = ("real", "hum", "authentic", "natural")
 
 
 def _normalize_label(label: str) -> str:
-    """Map any model label to 'ai' or 'real'.
-
-    Works across different id2label schemes:
-    - Ateeqq: {0: "ai", 1: "human"}
-    - haywoodsloan: {0: "artificial", 1: "real"}
-    """
     label_lower = label.lower().strip()
     if any(k in label_lower for k in _REAL_KEYWORDS):
         return "real"
@@ -53,12 +45,6 @@ def _logits_to_prediction(logits_row: torch.Tensor, id2label: dict) -> ModelPred
 
 
 def _extract_patches(image: Image.Image) -> tuple[list[Image.Image], tuple[int, int]]:
-    """Нарезаем изображение на патчи PATCH_SIZE×PATCH_SIZE.
-
-    Сначала ресайзим до PATCH_MAX_DIM по длинной стороне (сохраняя пропорции),
-    потом режем с шагом PATCH_STRIDE. Если картинка <= PATCH_SIZE — возвращаем
-    пустой список (будет только global predict).
-    """
     w, h = image.size
     if max(w, h) > PATCH_MAX_DIM:
         scale = PATCH_MAX_DIM / max(w, h)
@@ -82,8 +68,6 @@ def _extract_patches(image: Image.Image) -> tuple[list[Image.Image], tuple[int, 
 
 
 class ModelRegistry:
-    """Singleton holding loaded processor+model pairs."""
-
     _instance: "ModelRegistry | None" = None
 
     def __new__(cls) -> "ModelRegistry":
@@ -102,11 +86,10 @@ class ModelRegistry:
         self._models[model_id] = (processor, model)
 
     def _run_batch(self, model_id: str, images: list[Image.Image]) -> list[ModelPrediction]:
-        """Один батчевый forward pass для списка изображений."""
         processor, model = self._models[model_id]
         inputs = processor(images=images, return_tensors="pt")
         with torch.no_grad():
-            logits = model(**inputs).logits  # [N, num_classes]
+            logits = model(**inputs).logits
         id2label: dict = model.config.id2label
         return [_logits_to_prediction(logits[i], id2label) for i in range(logits.shape[0])]
 
@@ -114,7 +97,6 @@ class ModelRegistry:
         model_id = model_entry["id"]
         patches, (rows, cols) = _extract_patches(image)
 
-        # Глобальный снимок + все патчи — одним батчем
         all_preds = self._run_batch(model_id, [image] + patches)
         global_pred = all_preds[0]
         patch_preds = all_preds[1:]

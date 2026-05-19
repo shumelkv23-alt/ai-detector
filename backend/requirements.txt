@@ -14,5 +14,6 @@ transformers>=4.46
 numpy==2.1.*
 pydantic==2.9.*
 ultralytics==8.*
+openai>=1.50
 python-dotenv==1.*
 pytest==8.*

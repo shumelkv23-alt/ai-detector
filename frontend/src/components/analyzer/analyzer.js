@@ -1,4 +1,4 @@
-import { analyzeFile, analyzeUrl } from '../../utils/api.js'
+import { analyzeFile, analyzeUrl, explainAnalysis } from '../../utils/api.js'
 
 export function initAnalyzer() {
   const dropzone  = document.getElementById('dropzone')
@@ -12,10 +12,10 @@ export function initAnalyzer() {
   const errToast  = document.getElementById('error-toast')
   const ensemble  = document.getElementById('ensemble-card')
   const modGrid   = document.getElementById('models-grid')
+  const explain   = document.getElementById('explain-card')
 
   if (!dropzone) return
 
-  // Tab switching
   document.querySelectorAll('.analyze-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.analyze-tab').forEach(t => t.classList.remove('active'))
@@ -26,7 +26,6 @@ export function initAnalyzer() {
     })
   })
 
-  // Drag and drop
   dropzone.addEventListener('dragover', e => {
     e.preventDefault()
     dropzone.classList.add('drag-over')
@@ -38,30 +37,31 @@ export function initAnalyzer() {
     e.preventDefault()
     dropzone.classList.remove('drag-over')
     const file = e.dataTransfer.files[0]
-    if (file) run(() => analyzeFile(file))
+    if (file) run({ type: 'file', file })
   })
 
-  // File input change (triggered by the <label for="file-input"> click)
   fileInput.addEventListener('change', () => {
-    if (fileInput.files[0]) run(() => analyzeFile(fileInput.files[0]))
+    if (fileInput.files[0]) run({ type: 'file', file: fileInput.files[0] })
     fileInput.value = ''
   })
 
-  // URL submit
   urlSubmit.addEventListener('click', () => {
     const url = urlInput.value.trim()
-    if (url) run(() => analyzeUrl(url))
+    if (url) run({ type: 'url', url })
   })
   urlInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') urlSubmit.click()
   })
 
-  async function run(fn) {
+  async function run(source) {
     hideError()
     showLoading()
     try {
-      const data = await fn()
+      const data = source.type === 'file'
+        ? await analyzeFile(source.file)
+        : await analyzeUrl(source.url)
       renderResults(data)
+      requestExplanation(source, data)
     } catch (err) {
       showError(err.message)
     } finally {
@@ -84,7 +84,7 @@ export function initAnalyzer() {
   function hideError() { errToast.classList.add('hidden') }
 
   function renderResults(data) {
-    const { ensemble: ens, models, elapsed_ms } = data
+    const { ensemble: ens, models, elapsed_ms, vlm_watermark } = data
     const isAI = ens.verdict === 'ai'
     const label = isAI ? 'AI-GENERATED' : 'REAL'
 
@@ -92,15 +92,16 @@ export function initAnalyzer() {
       <div class="ens-verdict ${isAI ? 'ens-ai' : 'ens-real'}">${label}</div>
       <div class="ens-conf-row">
         <span class="ens-label">AI_PROB</span>
-        <div class="bar-wrap"><div class="bar-fill ${isAI ? 'fill-ai' : 'fill-real'}" style="width:${(ens.ai_prob * 100).toFixed(1)}%"></div></div>
+        <div class="bar-wrap"><div class="bar-fill fill-ai" style="width:${(ens.ai_prob * 100).toFixed(1)}%"></div></div>
         <span class="ens-val">${(ens.ai_prob * 100).toFixed(1)}%</span>
       </div>
       <div class="ens-conf-row">
         <span class="ens-label">REAL_PROB</span>
-        <div class="bar-wrap"><div class="bar-fill ${isAI ? 'fill-real' : 'fill-real'}" style="width:${(ens.real_prob * 100).toFixed(1)}%"></div></div>
+        <div class="bar-wrap"><div class="bar-fill fill-real" style="width:${(ens.real_prob * 100).toFixed(1)}%"></div></div>
         <span class="ens-val">${(ens.real_prob * 100).toFixed(1)}%</span>
       </div>
       ${ens.disagreement ? '<div class="ens-warn">⚠ MODELS DISAGREE — LOW CONFIDENCE</div>' : ''}
+      ${watermarkNote(vlm_watermark)}
       <div class="ens-meta">CONFIDENCE · ${(ens.confidence * 100).toFixed(0)}% &nbsp;·&nbsp; ELAPSED · ${elapsed_ms} ms</div>
     `
 
@@ -110,7 +111,7 @@ export function initAnalyzer() {
       const realPct = (m.real_prob * 100).toFixed(1)
       return `
         <div class="model-card">
-          <div class="model-name" title="${m.name}">${name}</div>
+          <div class="model-name" title="${escapeHtml(m.name)}">${escapeHtml(name)}</div>
           <div class="model-row">
             <span class="model-label">AI</span>
             <div class="bar-wrap"><div class="bar-fill fill-ai" style="width:${aiPct}%"></div></div>
@@ -127,5 +128,70 @@ export function initAnalyzer() {
 
     results.classList.remove('hidden')
     results.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }
+
+  function watermarkNote(wm) {
+    if (!wm) return ''
+    if (wm.watermark_found) {
+      const type = escapeHtml(String(wm.watermark_type).toUpperCase())
+      const conf = (wm.watermark_confidence * 100).toFixed(0)
+      return `<div class="ens-watermark ens-watermark-found">◆ ВОДЯНОЙ ЗНАК · ${type} · ${conf}%</div>`
+    }
+    return '<div class="ens-watermark">○ ВОДЯНОЙ ЗНАК НЕ ОБНАРУЖЕН</div>'
+  }
+
+  async function requestExplanation(source, data) {
+    showExplainLoading()
+    try {
+      const analysis = { ensemble: data.ensemble, vlm_watermark: data.vlm_watermark }
+      renderExplanation(await explainAnalysis(source, analysis))
+    } catch (err) {
+      renderExplainError(err.message)
+    }
+  }
+
+  const EXPLAIN_HEAD = '<span class="explain-eyebrow">— VLM разбор</span>'
+
+  function showExplainLoading() {
+    explain.classList.remove('hidden')
+    explain.innerHTML = `
+      <div class="explain-head">${EXPLAIN_HEAD}</div>
+      <div class="explain-loading">
+        <div class="loading-spinner loading-spinner-sm"></div>
+        <span>VLM генерирует разбор…</span>
+      </div>
+    `
+  }
+
+  function renderExplanation(r) {
+    const evidence = r.evidence && r.evidence.length
+      ? `<div class="explain-sublabel">ПРИЗНАКИ</div>
+         <ul class="explain-evidence">${r.evidence.map(e => `<li>${escapeHtml(e)}</li>`).join('')}</ul>`
+      : ''
+    const caveat = r.caveat
+      ? `<div class="explain-caveat">
+           <div class="explain-caveat-label">⚠ ОГОВОРКА</div>
+           <div class="explain-caveat-text">${escapeHtml(r.caveat)}</div>
+         </div>`
+      : ''
+    explain.innerHTML = `
+      <div class="explain-head">${EXPLAIN_HEAD}<span class="explain-dot"></span></div>
+      <p class="explain-text${r.available ? '' : ' explain-text-muted'}">${escapeHtml(r.explanation)}</p>
+      ${evidence}
+      ${caveat}
+    `
+  }
+
+  function renderExplainError(msg) {
+    explain.innerHTML = `
+      <div class="explain-head">${EXPLAIN_HEAD}</div>
+      <p class="explain-text explain-text-muted">Не удалось получить разбор: ${escapeHtml(msg)}</p>
+    `
+  }
+
+  function escapeHtml(value) {
+    const div = document.createElement('div')
+    div.textContent = String(value)
+    return div.innerHTML
   }
 }

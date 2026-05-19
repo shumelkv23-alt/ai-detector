@@ -28,12 +28,7 @@ class EnsembleResult(TypedDict):
     watermark_score: float
 
 
-# Порог, выше которого ELA получает право переопределить вердикт ансамбля.
-# Подобран эмпирически: чистые JPEG дают ela_score ~0.1-0.3, манипуляции ~0.6+.
 ELA_OVERRIDE_THRESHOLD = 0.6
-
-# Если стандартное отклонение ai_prob по моделям больше — модели спорят,
-# берём медиану вместо среднего (устойчивая к выбросам статистика).
 DISAGREEMENT_STD = 0.25
 
 
@@ -54,21 +49,17 @@ def aggregate(
     std = math.sqrt(variance)
     disagreement = std > DISAGREEMENT_STD
 
-    # Если модели сильно расходятся — медиана выбрасывает экстремиста.
     if disagreement and len(ai_probs) >= 3:
         base_ai = sorted(ai_probs)[len(ai_probs) // 2]
     else:
         base_ai = sum(p * w for p, w in zip(ai_probs, weights)) / total_weight
 
-    # Patch_max повышает вердикт только если global уже склоняется к AI
-    # (иначе один странный патч переворачивает вердикт на чистом фото).
     weighted_patch_max = sum(r["patch_max_ai"] * r["weight"] for r in results) / total_weight
     if base_ai >= 0.4:
         final_ai = max(base_ai, weighted_patch_max)
     else:
         final_ai = base_ai
 
-    # AI-сигналы — толкают вверх к "ai"
     if ela_score >= ELA_OVERRIDE_THRESHOLD:
         final_ai = max(final_ai, ela_score)
     if exif_score >= EXIF_OVERRIDE_THRESHOLD:
@@ -80,9 +71,6 @@ def aggregate(
     if watermark_score >= WATERMARK_OVERRIDE_THRESHOLD:
         final_ai = max(final_ai, watermark_score)
 
-    # REAL-сигналы — тянут вниз к "real"
-    # exif_score <= 0.1 значит EXIF содержит данные камеры (Make/Model)
-    # и нет упоминаний AI-софта — сильный признак реальной фотографии.
     has_camera_exif = exif_score <= 0.1
     no_ai_signals = (
         watermark_score < 0.3
@@ -91,7 +79,6 @@ def aggregate(
     if has_camera_exif and no_ai_signals:
         final_ai = min(final_ai, 0.45)
 
-    # Все forensics молчат → ослабляем вердикт (страхует от агрессивной модели).
     all_forensics_quiet = (
         ela_score < 0.2
         and fft_score < 0.3

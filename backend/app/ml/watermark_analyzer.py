@@ -1,24 +1,10 @@
-"""Детектор водяных знаков AI-генераторов.
-
-Три независимых сигнала (все graceful fallback если недоступны):
-1. YOLO-World  — визуальные watermarks по текстовым промптам (zero-shot).
-2. Roboflow API — кастомная обученная модель (если задан ROBOFLOW_MODEL_ID).
-3. Метаданные  — EXIF / PNG text / XMP ключевые слова + C2PA credentials.
-"""
-
-import base64
-import io
 import logging
 from typing import TypedDict
 
-import httpx
 from PIL import Image
-
-from app.config import ROBOFLOW_API_KEY, ROBOFLOW_MODEL_ID, ROBOFLOW_MODEL_VERSION
 
 logger = logging.getLogger(__name__)
 
-# (class_name, текстовый промпт для YOLO-World)
 _WATERMARK_PROMPTS: list[tuple[str, str]] = [
     ("midjourney",    "Midjourney AI art logo watermark text"),
     ("adobe_firefly", "Adobe Firefly generative AI badge logo"),
@@ -32,8 +18,7 @@ _WATERMARK_PROMPTS: list[tuple[str, str]] = [
     ("leonardo_ai",   "Leonardo AI image generator logo watermark"),
 ]
 
-_YOLO_CONF      = 0.35   # YOLO-World: поднимаем чтобы срезать false positives
-_ROBOFLOW_CONF  = 0.70   # Roboflow: высокий порог, модель обучена на 12 фото
+_YOLO_CONF = 0.35
 
 _AI_KEYWORDS: tuple[str, ...] = (
     "stable diffusion", "comfyui", "automatic1111", "novelai",
@@ -46,6 +31,9 @@ _C2PA_MARKERS: tuple[str, ...] = ("c2pa", "contentcredentials", "jumbf")
 
 WATERMARK_OVERRIDE_THRESHOLD = 0.9
 
+_WM_SCORE_BASE = 0.40
+_WM_SCORE_SLOPE = 0.55
+
 
 class WatermarkResult(TypedDict):
     detected_generator: str
@@ -54,13 +42,18 @@ class WatermarkResult(TypedDict):
     watermark_score: float
 
 
-# ---------------------------------------------------------------------------
-# YOLO-World детектор
-# ---------------------------------------------------------------------------
+def _conf_to_score(confidence: float) -> float:
+    clamped = max(0.0, min(1.0, confidence))
+    return round(_WM_SCORE_BASE + _WM_SCORE_SLOPE * clamped, 4)
+
+
+def watermark_score_from_vlm(found: bool, confidence: float) -> float:
+    if not found:
+        return 0.0
+    return _conf_to_score(confidence)
+
 
 class _YoloWorldDetector:
-    """Singleton YOLO-World детектор. Lazy-загрузка при первом вызове."""
-
     _instance: "_YoloWorldDetector | None" = None
     _model: object = None
     _loaded: bool = False
@@ -109,60 +102,6 @@ class _YoloWorldDetector:
             return []
 
 
-# ---------------------------------------------------------------------------
-# Roboflow API детектор
-# ---------------------------------------------------------------------------
-
-class _RoboflowDetector:
-    """Прямой вызов модели detect.roboflow.com без workflow.
-
-    Нужны переменные (backend/.env):
-      ROBOFLOW_API_KEY=esYu...
-      ROBOFLOW_MODEL_ID=gemini-watermark-v2
-      ROBOFLOW_MODEL_VERSION=1
-    """
-
-    def _enabled(self) -> bool:
-        return bool(ROBOFLOW_API_KEY and ROBOFLOW_MODEL_ID)
-
-    def _to_base64(self, image: Image.Image) -> str:
-        buf = io.BytesIO()
-        image.convert("RGB").save(buf, format="JPEG", quality=90)
-        return base64.b64encode(buf.getvalue()).decode()
-
-    def detect(self, image: Image.Image) -> list[tuple[str, float]]:
-        if not self._enabled():
-            return []
-
-        url = f"https://detect.roboflow.com/{ROBOFLOW_MODEL_ID}/{ROBOFLOW_MODEL_VERSION}"
-        try:
-            response = httpx.post(
-                url,
-                params={"api_key": ROBOFLOW_API_KEY},
-                content=self._to_base64(image),
-                headers={"Content-Type": "application/x-www-form-urlencoded"},
-                timeout=15.0,
-            )
-            response.raise_for_status()
-            data = response.json()
-        except Exception as exc:
-            logger.error("Roboflow model error: %s", exc)
-            return []
-
-        detections: list[tuple[str, float]] = []
-        for pred in data.get("predictions", []):
-            cls_name = pred.get("class", "unknown")
-            conf = float(pred.get("confidence", 0.0))
-            if conf >= _ROBOFLOW_CONF:
-                detections.append((cls_name, conf))
-
-        return detections
-
-
-# ---------------------------------------------------------------------------
-# Метаданные
-# ---------------------------------------------------------------------------
-
 def _collect_metadata_text(image: Image.Image) -> str:
     parts: list[str] = []
     try:
@@ -183,24 +122,14 @@ def _scan_metadata(image: Image.Image) -> tuple[str, bool]:
     return detected, has_c2pa
 
 
-# ---------------------------------------------------------------------------
-# Публичный API
-# ---------------------------------------------------------------------------
-
-_yolo_detector     = _YoloWorldDetector()
-_roboflow_detector = _RoboflowDetector()
+_yolo_detector = _YoloWorldDetector()
 
 
 def analyze_watermark(image: Image.Image) -> WatermarkResult:
     detected_generator, has_c2pa = _scan_metadata(image)
 
-    # Сначала Roboflow (обучен на Gemini watermark)
-    all_hits = _roboflow_detector.detect(image)
-    # YOLO-World запускаем только если Roboflow ничего не нашёл
-    if not all_hits:
-        all_hits = _yolo_detector.detect(image)
+    all_hits = _yolo_detector.detect(image)
 
-    # Дедупликация по имени класса — берём максимальный confidence
     seen: dict[str, float] = {}
     for cls, conf in all_hits:
         seen[cls] = max(seen.get(cls, 0.0), conf)
@@ -211,10 +140,8 @@ def analyze_watermark(image: Image.Image) -> WatermarkResult:
     if detected_classes and not detected_generator:
         detected_generator = max(seen, key=lambda k: seen[k])
 
-    # Линейная шкала вместо ступеньки: conf=0.70 → 0.785, conf=0.95 → 0.92.
-    # Срабатывание с порогом не означает автоматически "AI на 95%".
     if detected_classes:
-        score = 0.40 + 0.55 * best_conf
+        score = _conf_to_score(best_conf)
     elif detected_generator:
         score = 0.80
     elif has_c2pa:

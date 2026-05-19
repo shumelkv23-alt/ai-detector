@@ -8,7 +8,7 @@ function animateCounter(el) {
   function tick(now) {
     const elapsed = now - start
     const p       = Math.min(1, elapsed / duration)
-    const eased   = 1 - Math.pow(1 - p, 3) // ease-out cubic
+    const eased   = 1 - Math.pow(1 - p, 3)
     el.textContent = (to * eased).toFixed(decimals) + suffix
     if (p < 1) requestAnimationFrame(tick)
   }
