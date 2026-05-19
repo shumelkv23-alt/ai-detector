@@ -1,0 +1,109 @@
+.hero {
+  position: relative;
+  padding: 80px 0 64px;
+  border-bottom: 1px solid var(--line-1);
+  overflow: hidden;
+}
+
+.hero-grid-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(to right, rgba(245,245,245,0.025) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(245,245,245,0.025) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+}
+
+.hero-inner {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 64px;
+  align-items: center;
+}
+
+.hero-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+  margin-bottom: 24px;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-eyebrow .dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--signal);
+  box-shadow: 0 0 12px rgba(16,185,129,0.8);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+
+.hero-title {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: clamp(48px, 6.4vw, 88px);
+  letter-spacing: -0.04em;
+  line-height: 1.02;
+  color: var(--fg-1);
+}
+
+.hero-title .accent { color: var(--signal); }
+.hero-title .slash  { color: var(--fg-4); }
+
+.hero-sub {
+  margin-top: 24px;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--fg-2);
+  max-width: 480px;
+}
+
+.hero-actions {
+  margin-top: 36px;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.hero-meta {
+  margin-top: 36px;
+  display: flex;
+  gap: 32px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-3);
+}
+
+.hero-meta .v {
+  color: var(--fg-1);
+  display: block;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+  text-transform: none;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 900px) {
+  .hero-inner { grid-template-columns: 1fr; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-eyebrow .dot { animation: none; }
+}

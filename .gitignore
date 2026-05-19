@@ -20,6 +20,9 @@ build/
 # HuggingFace cache (models are huge, not committing)
 .cache/
 
+# Model weights (downloadable checkpoints, too big for git)
+*.pt
+
 # Test artifacts
 .pytest_cache/
 .coverage
