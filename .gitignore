@@ -41,9 +41,14 @@ desktop.ini
 *.swo
 *~
 
-# Node (на будущее)
+# Node / Vite
 node_modules/
 npm-debug.log*
+.vite/
+
+# Личные рабочие файлы (не для репозитория)
+plan.md
+documentation.html
 
 # Misc
 *.bak

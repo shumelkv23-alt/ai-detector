@@ -1,6 +1,9 @@
 import torch
+
 from PIL import Image
+
 from transformers import AutoImageProcessor, AutoModelForImageClassification
+
 from typing import TypedDict
 
 from app.config import TEMPERATURE, PATCH_SIZE, PATCH_STRIDE, PATCH_MAX_DIM
